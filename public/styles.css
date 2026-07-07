@@ -147,26 +147,43 @@ body {
   padding: 8px 12px;
 }
 
-.song-links {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.lyrics-toggle {
+  display: block;
+  width: 100%;
+  padding: 10px 0;
+  margin-bottom: 8px;
+  border: none;
+  background: none;
   font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  border-top: 1px solid var(--border);
+}
+.lyrics-toggle:hover {
+  color: var(--accent);
 }
 
-.link-lyrics {
-  font-size: 0.82rem;
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 500;
+.lyrics-content {
+  display: none;
+  font-size: 0.92rem;
+  line-height: 2.2;
+  color: var(--text-secondary);
+  padding: 16px 0 0 0;
+  margin-bottom: 16px;
+  border-top: 1px dashed var(--border);
 }
-.link-lyrics:hover {
-  text-decoration: underline;
+.lyrics-content.open {
+  display: block;
 }
 
 .song-duration {
+  display: inline-block;
   font-size: 0.8rem;
   color: var(--text-tertiary);
+  font-family: 'Noto Sans SC', sans-serif;
+  margin-top: 4px;
 }
 
 /* Footer */
@@ -179,24 +196,3 @@ body {
   color: var(--text-tertiary);
   font-family: 'Noto Sans SC', sans-serif;
 }
-
-.site-footer a {
-  color: var(--text-secondary);
-  text-decoration: none;
-}
-.site-footer a:hover {
-  color: var(--accent);
-}
-.site-footer .tiny {
-  margin-top: 6px;
-  font-size: 0.72rem;
-}
-
-/* Empty state */
-.empty-state {
-  text-align: center;
-  padding: 80px 0;
-  color: var(--text-tertiary);
-}
-.empty-state .emoji { font-size: 3rem; margin-bottom: 16px; }
-.empty-state h2 { font-size: 1.2rem; margin-bottom: 8px; color: var(--text-secondary); }

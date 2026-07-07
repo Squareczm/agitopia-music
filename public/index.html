@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AGITopia Music</title>
-<meta name="description" content="AGITopia 社群原创音乐 · AI 生成的碳基之歌">
-<meta property="og:title" content="AGITopia Music">
-<meta property="og:description" content="不为AI所困 · 碳基生命的音乐表达">
+<title>James Cheng · Music</title>
+<meta name="description" content="James Cheng 的个人音乐作品">
+<meta property="og:title" content="James Cheng · Music">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
 </head>
@@ -15,20 +14,41 @@
 <div class="container">
 
 <header class="site-header">
-  <h1>AGITopia <span class="muted">Music</span></h1>
-  <p class="tagline">碳基生命的声音 · AI 时代的社区原创</p>
+  <h1>James <span class="muted">Cheng</span></h1>
+  <p class="tagline">音乐作品</p>
 </header>
 
 <main id="song-list">
-  <!-- populated by JS from songs.json -->
 </main>
 
 <footer class="site-footer">
-  <p>不为AI所困 · <a href="https://github.com/Squareczm/context-infrastructure">AGITopia Community</a></p>
-  <p class="tiny">Songs generated with AI · Self-hosted on Cloudflare R2</p>
+  <p>&copy; 2026 James Cheng</p>
 </footer>
 
 </div>
+
+<template id="song-template">
+  <article class="song-card">
+    <div class="song-cover">
+      <div class="cover-placeholder"><span class="cover-char"></span></div>
+    </div>
+    <div class="song-body">
+      <div class="song-meta-top">
+        <span class="song-style"></span>
+        <span class="song-date"></span>
+      </div>
+      <h2 class="song-title"></h2>
+      <p class="song-subtitle"></p>
+      <p class="song-desc"></p>
+      <audio class="plyr-player" controls>
+        <source type="audio/mpeg">
+      </audio>
+      <button class="lyrics-toggle">展开歌词</button>
+      <div class="lyrics-content"></div>
+      <span class="song-duration"></span>
+    </div>
+  </article>
+</template>
 
 <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
 <script>
@@ -36,44 +56,49 @@ async function loadSongs() {
   const res = await fetch('/songs.json');
   const songs = await res.json();
   const list = document.getElementById('song-list');
+  const tpl = document.getElementById('song-template');
 
   songs.forEach(song => {
-    const card = document.createElement('article');
-    card.className = 'song-card';
-    card.id = `song-${song.id}`;
-    card.innerHTML = `
-      <div class="song-cover">
-        <div class="cover-placeholder">
-          <span>${song.title[0]}</span>
-        </div>
-      </div>
-      <div class="song-body">
-        <div class="song-meta-top">
-          <span class="song-style">${song.style}</span>
-          <span class="song-date">${song.date}</span>
-        </div>
-        <h2 class="song-title">${song.title}</h2>
-        <p class="song-subtitle">${song.subtitle}</p>
-        <p class="song-desc">${song.description}</p>
-        <audio class="plyr-player" controls>
-          <source src="/audio/${song.file}" type="audio/mpeg">
-        </audio>
-        <div class="song-links">
-          ${song.lyrics ? `<a href="${song.lyrics}" target="_blank" class="link-lyrics">歌词</a>` : ''}
-          <span class="song-duration">${song.duration}</span>
-        </div>
-      </div>
-    `;
+    const card = tpl.content.cloneNode(true);
+
+    card.querySelector('.cover-char').textContent = song.title[0];
+    card.querySelector('.song-style').textContent = song.style;
+    card.querySelector('.song-date').textContent = song.date;
+    card.querySelector('.song-title').textContent = song.title;
+    card.querySelector('.song-subtitle').textContent = song.subtitle || '';
+    card.querySelector('.song-desc').textContent = song.description || '';
+    card.querySelector('.song-duration').textContent = song.duration || '';
+    card.querySelector('source').src = `/audio/${song.file}`;
+
+    // Lyrics toggle
+    const lyricsDiv = card.querySelector('.lyrics-content');
+    const toggleBtn = card.querySelector('.lyrics-toggle');
+
+    if (song.lyrics && song.lyrics.trim()) {
+      lyricsDiv.innerHTML = song.lyrics.replace(/\n/g, '<br>');
+      toggleBtn.addEventListener('click', () => {
+        const open = lyricsDiv.classList.toggle('open');
+        toggleBtn.textContent = open ? '收起歌词' : '展开歌词';
+      });
+    } else {
+      toggleBtn.style.display = 'none';
+    }
+
+    // Duration on toggle line
+    card.querySelector('.song-duration').textContent = song.duration || '';
+
     list.appendChild(card);
   });
 
-  // Initialize Plyr on all audio elements
-  document.querySelectorAll('.plyr-player').forEach(el => {
-    new Plyr(el, {
-      controls: ['play', 'progress', 'current-time', 'duration', 'volume'],
-      preload: 'metadata'
+  // Init Plyr
+  if (typeof Plyr !== 'undefined') {
+    document.querySelectorAll('.plyr-player').forEach(el => {
+      new Plyr(el, {
+        controls: ['play', 'progress', 'current-time', 'duration', 'volume'],
+        preload: 'metadata'
+      });
     });
-  });
+  }
 }
 
 loadSongs();
