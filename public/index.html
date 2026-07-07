@@ -11,76 +11,64 @@
 </head>
 <body>
 
+<div class="noise"></div>
+<div class="grid-pattern"></div>
+
 <div class="container">
 
 <header class="site-header">
-  <div class="header-glow"></div>
+  <div class="logo-mark">J</div>
   <h1>James <span>的音乐小世界</span></h1>
-  <p class="tagline">一些旋律，一些想法，一些声音</p>
 </header>
 
 <main id="song-list"></main>
 
 <footer class="site-footer">
-  <p>&copy; 2026 James Cheng</p>
+  <span class="dot"></span>
+  <span class="dot"></span>
+  <span class="dot"></span>
 </footer>
 
 </div>
 
 <template id="song-template">
   <article class="song-card">
-    <div class="song-cover">
-      <div class="cover-visual"></div>
-      <span class="cover-label"></span>
-    </div>
-    <div class="song-body">
-      <div class="song-meta-top">
+    <div class="card-inner">
+      <div class="card-header">
+        <h2 class="song-title"></h2>
         <span class="song-style"></span>
-        <span class="song-date"></span>
       </div>
-      <h2 class="song-title"></h2>
-      <p class="song-subtitle"></p>
       <p class="song-desc"></p>
       <audio class="plyr-player" controls preload="metadata">
         <source type="audio/mpeg">
       </audio>
-      <button class="lyrics-toggle">展开歌词</button>
+      <div class="card-footer">
+        <button class="lyrics-toggle">
+          <span class="toggle-icon">+</span>
+          <span class="toggle-text">歌词</span>
+        </button>
+        <span class="song-duration"></span>
+      </div>
       <div class="lyrics-content"></div>
-      <span class="song-duration"></span>
     </div>
   </article>
 </template>
 
 <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
 <script>
-const THEMES = {
-  warm:  { bg: 'linear-gradient(135deg, #f59e0b 0%, #d97706 40%, #92400e 100%)', label: '校园民谣', accent: '#f59e0b' },
-  fire:  { bg: 'linear-gradient(135deg, #ef4444 0%, #dc2626 40%, #7f1d1d 100%)', label: '说唱', accent: '#ef4444' },
-  ocean: { bg: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 40%, #0c4a6e 100%)', label: '电子', accent: '#0ea5e9' },
-  forest:{ bg: 'linear-gradient(135deg, #22c55e 0%, #16a34a 40%, #14532d 100%)', label: '民谣', accent: '#22c55e' },
-  night: { bg: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 40%, #1e1b4b 100%)', label: '摇滚', accent: '#6366f1' },
-};
-
 async function loadSongs() {
   const res = await fetch('/songs.json');
   const songs = await res.json();
   const list = document.getElementById('song-list');
   const tpl = document.getElementById('song-template');
 
-  songs.forEach((song, i) => {
+  songs.forEach(song => {
     const card = tpl.content.cloneNode(true);
-    const theme = THEMES[song.theme] || THEMES.warm;
 
-    card.querySelector('.cover-char')?.remove(); // legacy cleanup
-    card.querySelector('.cover-visual').style.background = theme.bg;
-    card.querySelector('.cover-label').textContent = theme.label;
-    card.querySelector('.song-style').textContent = song.style;
-    card.querySelector('.song-style').style.color = theme.accent;
-    card.querySelector('.song-style').style.background = theme.accent + '18';
-    card.querySelector('.song-date').textContent = song.date;
     card.querySelector('.song-title').textContent = song.title;
-    card.querySelector('.song-subtitle').textContent = song.subtitle || '';
+    card.querySelector('.song-style').textContent = song.style;
     card.querySelector('.song-desc').textContent = song.description || '';
+    card.querySelector('.song-duration').textContent = song.duration || '';
 
     const audio = card.querySelector('audio');
     audio.querySelector('source').src = 'https://audio.ainovalife.com/' + song.file;
@@ -88,17 +76,22 @@ async function loadSongs() {
 
     const lyricsDiv = card.querySelector('.lyrics-content');
     const toggleBtn = card.querySelector('.lyrics-toggle');
+    const toggleIcon = toggleBtn.querySelector('.toggle-icon');
+    const toggleText = toggleBtn.querySelector('.toggle-text');
+
     if (song.lyrics && song.lyrics.trim()) {
       lyricsDiv.innerHTML = song.lyrics.replace(/\n/g, '<br>');
       toggleBtn.addEventListener('click', () => {
         const open = lyricsDiv.classList.toggle('open');
-        toggleBtn.textContent = open ? '收起歌词' : '展开歌词';
+        toggleIcon.textContent = open ? '−' : '+';
+        toggleText.textContent = open ? '收起' : '歌词';
+        if (open) toggleBtn.classList.add('active');
+        else toggleBtn.classList.remove('active');
       });
     } else {
       toggleBtn.style.display = 'none';
     }
 
-    card.querySelector('.song-duration').textContent = song.duration || '';
     list.appendChild(card);
   });
 
@@ -113,6 +106,13 @@ async function loadSongs() {
 }
 
 loadSongs();
+
+// Subtle parallax on mouse move
+document.addEventListener('mousemove', e => {
+  const x = (e.clientX / window.innerWidth - 0.5) * 4;
+  const y = (e.clientY / window.innerHeight - 0.5) * 4;
+  document.querySelector('.grid-pattern').style.transform = `translate(${x}px, ${y}px)`;
+});
 </script>
 
 </body>
