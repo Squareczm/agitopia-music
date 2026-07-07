@@ -1,223 +1,227 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>James 的音乐小世界</title>
-<meta name="description" content="James 的个人音乐作品">
-<link rel="stylesheet" href="styles.css">
+<meta name="theme-color" content="#f5f1e8">
+<meta name="description" content="音の記録 · 声音志 — James 写给自己的声音志，按时间顺序排好的私人心境。">
+<title>声音志 · Sound Journal · 音の記録</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;700&family=Noto+Serif+JP:wght@300;400;500;700&family=Noto+Sans+SC:wght@300;400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='none' stroke='%23a8341c' stroke-width='4'/%3E%3Ctext x='50' y='62' text-anchor='middle' font-family='serif' font-size='42' font-weight='700' fill='%23a8341c'%3E声%3C/text%3E%3C/svg%3E">
 </head>
 <body>
 
-<div class="paper"></div>
-
-<div class="container">
-
-<header class="hero">
-  <div class="hero-line"></div>
-  <h1 class="hero-name">James</h1>
-  <p class="hero-sub">音乐小世界</p>
-</header>
-
-<main id="song-list">
-  <div class="loading">Loading</div>
-</main>
-
-<footer class="footer"></footer>
-
+<!-- ─────────── intro ─────────── -->
+<div class="intro-overlay" aria-hidden="true">
+  <div class="intro-circle">声</div>
 </div>
 
+<!-- ─────────── nav ─────────── -->
+<nav class="nav frame" aria-label="主导航">
+  <a class="nav-brand" href="#top">
+    <span class="nav-brand-seal">声</span>
+    <span class="nav-brand-text">声音志</span>
+    <span class="nav-brand-romaji">oto no kiroku</span>
+  </a>
+  <div class="nav-actions">
+    <span class="nav-meta" id="nav-time">— —</span>
+    <button class="theme-toggle" id="theme-toggle" aria-label="切换主题" title="切换主题">
+      <svg class="icon-sun" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      </svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ─────────── hero ─────────── -->
+<header class="hero frame" id="top">
+  <div class="hero-bg" aria-hidden="true">
+    <div class="hero-bg-circle"></div>
+  </div>
+
+  <div class="hero-grid">
+    <div class="hero-left">
+      <div class="hero-eyebrow">
+        <span class="hero-eyebrow-line"></span>
+        <span>Sound Journal · 2026 —</span>
+      </div>
+
+      <h1 class="hero-title">
+        <span class="hero-title-ja">音<span class="stroke">楽</span>記録</span>
+        <span class="hero-title-zh">
+          <span>声音志</span>
+          <span class="hero-title-zh-romaji">A chronicle of private moods</span>
+        </span>
+      </h1>
+
+      <p class="hero-sub">
+        写给自己的声音。<br>
+        写给愿意 <em>停下来听</em> 的人。
+      </p>
+    </div>
+
+    <aside class="hero-meta">
+      <dl class="meta-grid">
+        <div class="meta-cell">
+          <dt>Artist</dt>
+          <dd>James Cheng</dd>
+        </div>
+        <div class="meta-cell">
+          <dt>From</dt>
+          <dd>深圳 · Shenzhen</dd>
+        </div>
+        <div class="meta-cell">
+          <dt>Volume</dt>
+          <dd><span class="meta-num">No. I</span></dd>
+        </div>
+        <div class="meta-cell">
+          <dt>Tracks</dt>
+          <dd><span class="meta-num" id="track-count">—</span></dd>
+        </div>
+      </dl>
+    </aside>
+  </div>
+
+  <div class="hero-divider" aria-hidden="true">
+    <span class="hero-divider-line"></span>
+    <span class="hero-divider-text">曲目 · 樂府 · TRACK LIST</span>
+    <span class="hero-divider-line"></span>
+  </div>
+</header>
+
+<!-- ─────────── tracks ─────────── -->
+<main class="tracks frame" id="song-list" aria-label="曲目列表">
+  <div class="loading">
+    <span class="loading-dot"></span>
+    <span class="loading-dot"></span>
+    <span class="loading-dot"></span>
+  </div>
+</main>
+
+<!-- ─────────── about ─────────── -->
+<section class="about frame" aria-label="关于">
+  <div class="about-inner">
+    <div class="about-mark">※ ※ ※</div>
+    <p class="about-text">
+      这里收录了 <em>James</em> 在 AI 时代的私人创作。<br>
+      没有发行计划，没有流量期待，<br>
+      只是一份按时间顺序排好的声音志。
+    </p>
+    <div class="about-divider" aria-hidden="true">終</div>
+    <p class="about-text about-text-quiet">
+      每一首歌都是某段时间里的某种心情。<br>
+      欢迎你按下播放键，然后放下手机。
+    </p>
+  </div>
+</section>
+
+<!-- ─────────── footer ─────────── -->
+<footer class="footer frame">
+  <div class="footer-inner">
+    <span>
+      <span class="footer-seal">声</span>
+      <span>© 2026 · James Cheng</span>
+    </span>
+    <span>深圳 · 寫於深夜與清晨之間</span>
+    <a class="footer-link" href="https://ainovalife.com" target="_blank" rel="noopener">ainovalife.com →</a>
+  </div>
+</footer>
+
+<!-- ─────────── sticky mini player ─────────── -->
+<div class="mini-player" id="mini-player" hidden>
+  <div class="mini-player-inner">
+    <div class="mini-info">
+      <span class="mini-num" id="mini-num"></span>
+      <span class="mini-title" id="mini-title"></span>
+    </div>
+    <div class="mini-bar-wrap">
+      <div class="mini-bar">
+        <div class="mini-bar-pos" id="mini-bar-pos"></div>
+      </div>
+    </div>
+    <span class="mini-time" id="mini-time">0:00</span>
+    <button class="mini-btn" id="mini-btn" aria-label="播放/暂停">
+      <svg class="mini-icon-play" viewBox="0 0 24 24" width="12" height="12"><polygon points="7,4 19,12 7,20" fill="currentColor"/></svg>
+      <svg class="mini-icon-pause" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><rect x="6" y="4" width="3.5" height="16" rx="0.5"/><rect x="14.5" y="4" width="3.5" height="16" rx="0.5"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ─────────── templates ─────────── -->
 <template id="song-template">
-  <article class="song">
-    <span class="song-num"></span>
-    <div class="song-main">
-      <header class="song-head">
-        <h2 class="song-title"></h2>
-        <span class="song-tag"></span>
-      </header>
-      <p class="song-desc"></p>
+  <article class="track" data-id="">
+    <div class="track-no">
+      <span class="track-no-kanji"></span>
+      <span class="track-no-line" aria-hidden="true"></span>
+      <span class="track-no-num"></span>
+    </div>
+
+    <div class="track-body">
+      <div class="track-titles">
+        <h2 class="track-title"></h2>
+        <span class="track-subtitle"></span>
+      </div>
+
+      <div class="track-info">
+        <span class="track-style"></span>
+        <span class="track-dot">·</span>
+        <span class="track-date"></span>
+        <span class="track-dot">·</span>
+        <span class="track-len"></span>
+      </div>
+
+      <div class="track-tags">
+        <span class="track-tag">原創 Original</span>
+        <span class="track-tag">詩詞 Lyrics</span>
+      </div>
+
+      <p class="track-desc"></p>
 
       <div class="player">
         <button class="player-btn" aria-label="播放/暂停">
-          <svg class="player-icon-play" viewBox="0 0 24 24" width="18" height="18"><polygon points="7,4 19,12 7,20"/></svg>
-          <svg class="player-icon-pause" viewBox="0 0 24 24" width="18" height="18"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+          <svg class="player-icon-play" viewBox="0 0 24 24" width="14" height="14"><polygon points="7,4 19,12 7,20" fill="currentColor"/></svg>
+          <svg class="player-icon-pause" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="4" width="3.5" height="16" rx="0.5"/><rect x="14.5" y="4" width="3.5" height="16" rx="0.5"/></svg>
         </button>
         <div class="player-bar-wrap">
           <div class="player-bar">
-            <div class="player-bar-buf"></div>
             <div class="player-bar-pos"></div>
+            <div class="player-bar-thumb"></div>
           </div>
         </div>
-        <span class="player-time"></span>
+        <span class="player-time">0:00 / 0:00</span>
       </div>
 
-      <div class="song-foot">
-        <button class="lyric-btn">歌词</button>
-        <span class="song-len"></span>
-      </div>
+      <button class="lyric-toggle" aria-expanded="false">
+        <span class="lyric-toggle-mark"></span>
+        <span class="lyric-toggle-text">展開詩詞 · View Lyrics</span>
+      </button>
 
-      <div class="lyric-body"></div>
+      <div class="lyric" hidden>
+        <div class="lyric-inner"></div>
+      </div>
     </div>
   </article>
 </template>
 
-<script>
-(function() {
-  'use strict';
+<!-- ─────────── section header template ─────────── -->
+<template id="section-template">
+  <div class="track-section">
+    <div class="track-section-header">
+      <span class="track-section-num"></span>
+      <span class="track-section-title"></span>
+      <span class="track-section-romaji"></span>
+    </div>
+  </div>
+</template>
 
-  var currentAudio = null;
-
-  function pad(n) { return n < 10 ? '0' + n : n; }
-  function fmt(sec) {
-    if (isNaN(sec) || sec < 0) return '0:00';
-    return Math.floor(sec / 60) + ':' + pad(Math.floor(sec % 60));
-  }
-
-  function bind(el, song) {
-    var audio = new Audio();
-    audio.preload = 'metadata';
-    var url = 'https://audio.ainovalife.com/' + song.file;
-
-    var btn = el.querySelector('.player-btn');
-    var icoPlay = el.querySelector('.player-icon-play');
-    var icoPause = el.querySelector('.player-icon-pause');
-    var barWrap = el.querySelector('.player-bar-wrap');
-    var barPos = el.querySelector('.player-bar-pos');
-    var barBuf = el.querySelector('.player-bar-buf');
-    var timeEl = el.querySelector('.player-time');
-
-    var dragging = false;
-
-    function setPlay(on) {
-      icoPlay.style.display = on ? 'none' : 'block';
-      icoPause.style.display = on ? 'block' : 'none';
-      btn.classList.toggle('on', on);
-      el.classList.toggle('playing', on);
-    }
-
-    function tick() {
-      if (!audio.duration) return;
-      barPos.style.width = (audio.currentTime / audio.duration * 100) + '%';
-      timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
-    }
-
-    btn.addEventListener('click', function() {
-      if (currentAudio && currentAudio !== audio) {
-        currentAudio.pause();
-        currentAudio._set(false);
-      }
-      if (audio.paused || !audio.src) {
-        if (!audio.src) audio.src = url;
-        audio.play().catch(function(){});
-        currentAudio = audio;
-        audio._set = setPlay;
-      } else {
-        audio.pause();
-        currentAudio = null;
-      }
-    });
-
-    audio.addEventListener('play', function() { setPlay(true); });
-    audio.addEventListener('pause', function() { setPlay(false); });
-    audio.addEventListener('ended', function() { setPlay(false); currentAudio = null; });
-    audio.addEventListener('timeupdate', tick);
-    audio.addEventListener('loadedmetadata', function() {
-      timeEl.textContent = '0:00 / ' + fmt(audio.duration);
-    });
-    audio.addEventListener('progress', function() {
-      if (audio.buffered.length && audio.duration) {
-        var p = audio.buffered.end(audio.buffered.length - 1) / audio.duration * 100;
-        if (isFinite(p)) barBuf.style.width = p + '%';
-      }
-    });
-
-    function seek(e) {
-      var r = barWrap.getBoundingClientRect();
-      var p = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
-      if (audio.duration) { audio.currentTime = p * audio.duration; tick(); }
-    }
-
-    barWrap.addEventListener('mousedown', function(e) {
-      dragging = true; seek(e);
-      document.addEventListener('mousemove', seek);
-      document.addEventListener('mouseup', function() {
-        dragging = false;
-        document.removeEventListener('mousemove', seek);
-      }, { once: true });
-    });
-
-    barWrap.addEventListener('touchstart', function(e) {
-      dragging = true; seek(e.touches[0]);
-      document.addEventListener('touchmove', function(ev) { seek(ev.touches[0]); });
-      document.addEventListener('touchend', function() {
-        dragging = false;
-      }, { once: true });
-    });
-  }
-
-  async function init() {
-    var list = document.getElementById('song-list');
-    var tpl = document.getElementById('song-template');
-
-    try { var res = await fetch('/songs.json'); } catch(e) {
-      list.innerHTML = '<p class="error">加载失败</p>'; return;
-    }
-    var songs = await res.json();
-    list.innerHTML = '';
-
-    songs.forEach(function(s, i) {
-      var card = tpl.content.cloneNode(true);
-      var el = card.querySelector('.song');
-
-      el.querySelector('.song-num').textContent = pad(i + 1);
-      el.querySelector('.song-title').textContent = s.title;
-      el.querySelector('.song-tag').textContent = s.style;
-      el.querySelector('.song-desc').textContent = s.description || '';
-      el.querySelector('.song-len').textContent = s.duration || '';
-
-      var lyricBody = el.querySelector('.lyric-body');
-      var lyricBtn = el.querySelector('.lyric-btn');
-
-      if (s.lyrics && s.lyrics.trim()) {
-        lyricBody.innerHTML = s.lyrics.replace(/\n/g, '<br>');
-        lyricBtn.addEventListener('click', function() {
-          var open = lyricBody.classList.toggle('open');
-          lyricBtn.textContent = open ? '收起' : '歌词';
-          lyricBtn.classList.toggle('on', open);
-        });
-      } else {
-        lyricBtn.style.display = 'none';
-      }
-
-      list.appendChild(card);
-      bind(el, s);
-    });
-
-    // Scroll reveal
-    if ('IntersectionObserver' in window) {
-      var obs = new IntersectionObserver(function(es) {
-        es.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('in'); });
-      }, { threshold: 0.15, rootMargin: '0px 0px -30px 0px' });
-      document.querySelectorAll('.song').forEach(function(s) { obs.observe(s); });
-    } else {
-      document.querySelectorAll('.song').forEach(function(s) { s.classList.add('in'); });
-    }
-  }
-
-  init();
-
-  // Subtle paper depth shift
-  document.addEventListener('mousemove', function(e) {
-    var x = (e.clientX / window.innerWidth - 0.5) * 3;
-    var y = (e.clientY / window.innerHeight - 0.5) * 3;
-    var paper = document.querySelector('.paper');
-    if (paper) paper.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
-  });
-})();
-</script>
-
+<script src="app.js"></script>
 </body>
 </html>

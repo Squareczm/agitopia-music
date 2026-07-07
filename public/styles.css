@@ -1,391 +1,1309 @@
-/* ===========================
-   James 的音乐小世界
-   =========================== */
+/* ============================================================
+   声音志 · Sound Journal
+   ── 侘寂之境 · The Realm of Wabi-Sabi ──
+   Inspired by: MUJI · Sugimoto Hiroshi · Kore-eda Hirokazu
+                 Nagaoka Kenmei · Ito Toyo · Kyoto machiya
+   ============================================================ */
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-:root {
-  --bg: #f8f4ee;
-  --text: #1a1a1a;
-  --text-mid: #787570;
-  --text-light: #b0aca5;
-  --text-faint: #cfcbc3;
-  --border: #e5e0d6;
-  --border-light: #ede8df;
-  --hover: #f3efe7;
+/* ----- reset ----- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
+/* ============================================================
+   TOKENS · 和紙の調色盤
+   ============================================================ */
+:root {
+  /* 和纸 surfaces — washi */
+  --washi:        #f5f1e8;
+  --washi-soft:   #ede8db;
+  --washi-deep:   #e3dcc9;
+  --washi-card:   #faf6ec;
+
+  /* 墨 ink */
+  --sumi:         #1a1612;
+  --sumi-soft:    #3a3530;
+  --sumi-mid:     #6a6358;
+  --sumi-light:   #a39d90;
+  --sumi-faint:   #d4cfc0;
+
+  /* 朱砂 vermilion — single accent */
+  --shu:          #a8341c;
+  --shu-soft:     #c25141;
+  --shu-faint:    #d99683;
+
+  /* 苔 moss — secondary accent */
+  --moss:         #5b6e4f;
+  --moss-soft:    #7a8d6e;
+
+  /* 線 line */
+  --kagi:         #c4bca9;
+  --kagi-soft:    #ddd5c0;
+  --kagi-bold:    #1a1612;
+
+  /* type */
+  --mincho: 'Noto Serif JP', 'Noto Serif SC', 'Hiragino Mincho ProN',
+            'YuMincho', 'Songti SC', 'STSong', 'SimSun', serif;
+  --serif:  'Noto Serif SC', 'Noto Serif JP', 'Hiragino Mincho ProN',
+            'Songti SC', 'STSong', serif;
+  --latin:  'Cormorant Garamond', 'EB Garamond', 'Garamond',
+            'Times New Roman', serif;
+  --mono:   'JetBrains Mono', 'SF Mono', Menlo, monospace;
+
+  /* rhythm */
+  --ease:       cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-quiet: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --d-fast: 0.24s;
+  --d-mid:  0.6s;
+  --d-slow: 1.2s;
+  --d-deep: 2s;
+}
+
+[data-theme="dark"] {
+  --washi:        #0e0d0a;
+  --washi-soft:   #161412;
+  --washi-deep:   #1f1c17;
+  --washi-card:   #1a1815;
+
+  --sumi:         #e8e3d3;
+  --sumi-soft:    #c4bfb0;
+  --sumi-mid:     #8a8576;
+  --sumi-light:   #5a564c;
+  --sumi-faint:   #3a372f;
+
+  --shu:          #c25141;
+  --shu-soft:     #d96a55;
+  --shu-faint:    #8a3a2a;
+
+  --moss:         #7a8d6e;
+
+  --kagi:         #2a2722;
+  --kagi-soft:    #1f1e1a;
+  --kagi-bold:    #e8e3d3;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
 html {
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Noto Serif SC', 'Songti SC', 'STSong', 'Hiragino Mincho Pro', serif;
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.8;
+  font-family: var(--serif);
+  font-weight: 300;
+  background: var(--washi);
+  color: var(--sumi);
+  line-height: 1.85;
   overflow-x: hidden;
+  transition: background var(--d-deep) var(--ease-quiet),
+              color var(--d-deep) var(--ease-quiet);
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "palt" 1;
+  letter-spacing: 0.02em;
+  position: relative;
+  min-height: 100vh;
 }
 
-/* ---- Paper texture ---- */
-
-.paper {
+/* 和纸纹理 — very subtle paper grain */
+body::before {
+  content: '';
   position: fixed;
-  inset: -10px;
-  z-index: 0;
+  inset: 0;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
-  background-size: 180px;
-  opacity: 0.028;
-  will-change: transform;
-  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 0;
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(0,0,0,0.012) 0%, transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(0,0,0,0.015) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(168,52,28,0.005) 0%, transparent 70%);
+}
+[data-theme="dark"] body::before {
+  mix-blend-mode: screen;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(232,227,211,0.015) 0%, transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(232,227,211,0.018) 0%, transparent 60%);
 }
 
-/* ---- Container ---- */
+a { color: inherit; text-decoration: none; }
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+::selection { background: var(--sumi); color: var(--washi); }
 
-.container {
+/* ============================================================
+   TYPOGRAPHY · 文字
+   ============================================================ */
+.kanji {
+  font-family: var(--mincho);
+  font-feature-settings: "palt" 1;
+}
+.latin {
+  font-family: var(--latin);
+  font-feature-settings: "lnum" 1;
+}
+.mono {
+  font-family: var(--mono);
+  font-feature-settings: "tnum" 1;
+}
+.small-caps {
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.68rem;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.frame {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 80px;
   position: relative;
   z-index: 1;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 120px 32px 80px;
+}
+@media (max-width: 960px) { .frame { padding: 0 40px; } }
+@media (max-width: 640px) { .frame { padding: 0 24px; } }
+
+/* ============================================================
+   NAV · 標
+   ============================================================ */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: color-mix(in oklab, var(--washi) 76%, transparent);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--d-mid) var(--ease-quiet),
+              background var(--d-mid) var(--ease-quiet);
+}
+.nav.scrolled {
+  border-bottom-color: var(--kagi);
 }
 
-/* ---- Hero ---- */
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--mincho);
+  font-weight: 500;
+}
+.nav-brand-seal {
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid var(--shu);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--shu);
+  font-family: var(--mincho);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  flex-shrink: 0;
+  position: relative;
+  transition: transform var(--d-mid) var(--ease);
+}
+.nav-brand:hover .nav-brand-seal {
+  transform: rotate(45deg);
+}
+.nav-brand-text {
+  font-size: 0.95rem;
+  letter-spacing: 0.14em;
+  color: var(--sumi);
+  font-weight: 500;
+}
+.nav-brand-romaji {
+  font-family: var(--latin);
+  font-size: 0.7rem;
+  font-style: italic;
+  color: var(--sumi-mid);
+  margin-left: 4px;
+  letter-spacing: 0.04em;
+  font-weight: 400;
+}
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.nav-meta {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  color: var(--sumi-mid);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nav-meta::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--shu);
+  display: inline-block;
+  animation: breathe 3s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+
+.theme-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--kagi);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sumi-soft);
+  transition: all var(--d-fast) var(--ease-quiet);
+}
+.theme-toggle:hover {
+  border-color: var(--sumi);
+  color: var(--sumi);
+  transform: rotate(180deg);
+}
+.theme-toggle .icon-moon { display: none; }
+[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
+[data-theme="dark"] .theme-toggle .icon-moon { display: block; }
+
+/* ============================================================
+   HERO · 序
+   ============================================================ */
 .hero {
-  margin-bottom: 96px;
+  padding-top: 160px;
+  padding-bottom: 140px;
+  position: relative;
+  overflow: hidden;
 }
 
-.hero-line {
-  width: 1px;
-  height: 56px;
-  background: linear-gradient(to bottom, var(--border), transparent);
+/* 大型和纸纹背景圆 */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.hero-bg-circle {
+  position: absolute;
+  top: -300px;
+  right: -300px;
+  width: 900px;
+  height: 900px;
+  border: 1px solid var(--kagi-soft);
+  border-radius: 50%;
+  opacity: 0.6;
+}
+.hero-bg-circle::before,
+.hero-bg-circle::after {
+  content: '';
+  position: absolute;
+  inset: 80px;
+  border: 1px solid var(--kagi-soft);
+  border-radius: 50%;
+  opacity: 0.5;
+}
+.hero-bg-circle::after {
+  inset: 180px;
+  opacity: 0.25;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 100px;
+  align-items: end;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  color: var(--sumi-mid);
+  margin-bottom: 48px;
+  text-transform: uppercase;
+}
+.hero-eyebrow-line {
+  flex: 0 0 40px;
+  height: 1px;
+  background: var(--sumi-mid);
+}
+
+.hero-title {
+  position: relative;
   margin-bottom: 36px;
 }
-
-.hero-name {
-  font-size: clamp(2.6rem, 5.5vw, 3.5rem);
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  line-height: 1;
-  margin-bottom: 16px;
+.hero-title-ja {
+  display: block;
+  font-family: var(--mincho);
+  font-weight: 400;
+  font-size: clamp(4.2rem, 11vw, 9rem);
+  line-height: 0.92;
+  letter-spacing: 0.04em;
+  color: var(--sumi);
+}
+.hero-title-ja .stroke {
+  -webkit-text-stroke: 1.5px var(--sumi);
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  margin: 0 -0.04em;
+  display: inline-block;
+}
+.hero-title-zh {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  margin-top: 16px;
+  font-family: var(--mincho);
+  font-size: clamp(1.8rem, 3.8vw, 3rem);
+  font-weight: 300;
+  color: var(--sumi-soft);
+  letter-spacing: 0.32em;
+}
+.hero-title-zh-romaji {
+  font-family: var(--latin);
+  font-style: italic;
+  font-size: 0.42em;
+  color: var(--sumi-mid);
+  letter-spacing: 0.04em;
+  font-weight: 400;
 }
 
 .hero-sub {
-  font-size: 0.88rem;
+  font-family: var(--serif);
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
   font-weight: 300;
-  letter-spacing: 0.22em;
-  color: var(--text-light);
+  color: var(--sumi-soft);
+  letter-spacing: 0.06em;
+  max-width: 480px;
+  line-height: 2.1;
+}
+.hero-sub em {
+  font-style: normal;
+  border-bottom: 1px solid var(--shu);
+  padding-bottom: 1px;
+  color: var(--sumi);
 }
 
-/* ---- Loading / Error ---- */
-
-.loading, .error {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  color: var(--text-light);
-  padding: 40px 0;
+.hero-meta {
+  padding-bottom: 12px;
 }
-
-/* ---- Song card ---- */
-
-.song {
+.meta-grid {
   display: grid;
-  grid-template-columns: 48px 1fr;
-  gap: 0;
-  padding: 40px 0;
-  border-bottom: 1px solid var(--border-light);
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 40px;
+  border-top: 1px solid var(--kagi);
+  padding-top: 26px;
+}
+.meta-cell {
+  position: relative;
+}
+.meta-cell dt {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  color: var(--sumi-light);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.meta-cell dt::before {
+  content: '';
+  width: 12px;
+  height: 1px;
+  background: var(--shu);
+}
+.meta-cell dd {
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--sumi);
+}
+.meta-cell .meta-num {
+  font-family: var(--latin);
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--shu);
 }
 
-.song.in {
-  opacity: 1;
-  transform: translateY(0);
+.hero-divider {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-top: 100px;
+  font-family: var(--mincho);
+  font-size: 0.82rem;
+  letter-spacing: 0.36em;
+  color: var(--sumi-mid);
+}
+.hero-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--kagi) 20%, var(--kagi) 80%, transparent);
+  position: relative;
+}
+.hero-divider-line::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 5px;
+  height: 5px;
+  background: var(--washi);
+  border: 1px solid var(--sumi-mid);
+  border-radius: 50%;
 }
 
-.song:first-child {
-  border-top: 1px solid var(--border);
-  padding-top: 0;
+/* ============================================================
+   TRACK LIST · 曲目
+   ============================================================ */
+.tracks {
+  padding-top: 32px;
+  padding-bottom: 140px;
+  min-height: 400px;
 }
 
-.song:last-child {
-  border-bottom: 1px solid var(--border);
+/* 曲目之间的章节分隔 */
+.track-section {
+  margin-bottom: 200px;
 }
+.track-section:last-child { margin-bottom: 0; }
 
-.song-num {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.65rem;
-  color: var(--text-faint);
-  letter-spacing: 0.1em;
-  padding-top: 5px;
-  transition: color 0.4s ease;
-}
-
-.song.playing .song-num {
-  color: var(--text);
-}
-
-.song-main {
-  min-width: 0;
-}
-
-/* ---- Song header ---- */
-
-.song-head {
+.track-section-header {
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 6px;
+  gap: 24px;
+  margin-bottom: 64px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--kagi);
 }
-
-.song-title {
-  font-size: 1.35rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  line-height: 1.35;
-}
-
-.song-tag {
-  font-family: 'Noto Serif SC', serif;
-  font-size: 0.62rem;
+.track-section-num {
+  font-family: var(--latin);
+  font-style: italic;
+  font-size: 1.8rem;
+  color: var(--shu);
   font-weight: 400;
-  letter-spacing: 0.15em;
-  color: var(--text-light);
-  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.track-section-title {
+  font-family: var(--mincho);
+  font-size: 1rem;
+  letter-spacing: 0.4em;
+  color: var(--sumi);
+  font-weight: 500;
+}
+.track-section-romaji {
+  font-family: var(--latin);
+  font-style: italic;
+  font-size: 0.78rem;
+  color: var(--sumi-mid);
+  margin-left: auto;
+  letter-spacing: 0.06em;
 }
 
-.song-desc {
+.track {
+  position: relative;
+  padding: 64px 0;
+  border-top: 1px solid var(--kagi);
+}
+.track:last-child {
+  border-bottom: 1px solid var(--kagi);
+}
+
+/* 大型序号 — left margin */
+.track-no {
+  position: absolute;
+  top: 80px;
+  left: 0;
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.track-no-kanji {
+  font-family: var(--mincho);
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--sumi);
+  letter-spacing: 0.18em;
+}
+.track-no-num {
+  font-family: var(--latin);
+  font-style: italic;
   font-size: 0.85rem;
-  font-weight: 300;
-  color: var(--text-mid);
-  line-height: 1.85;
-  margin-bottom: 20px;
+  color: var(--sumi-mid);
+  letter-spacing: 0.1em;
+}
+.track-no-line {
+  width: 36px;
+  height: 1px;
+  background: var(--sumi-light);
+  transition: width var(--d-mid) var(--ease-quiet),
+              background var(--d-fast) var(--ease-quiet);
+}
+.track.playing .track-no-kanji { color: var(--shu); }
+.track.playing .track-no-line {
+  width: 80px;
+  background: var(--shu);
 }
 
-/* ---- Player ---- */
+/* 主内容 — left margin */
+.track-body {
+  margin-left: 140px;
+  max-width: 760px;
+}
 
+.track-titles {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.track-title {
+  font-family: var(--mincho);
+  font-weight: 500;
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  letter-spacing: 0.12em;
+  line-height: 1.3;
+  color: var(--sumi);
+}
+.track.playing .track-title {
+  color: var(--shu);
+}
+.track-subtitle {
+  font-family: var(--latin);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1rem, 1.4vw, 1.25rem);
+  color: var(--sumi-mid);
+  letter-spacing: 0.04em;
+}
+
+.track-info {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  color: var(--sumi-mid);
+  margin-bottom: 28px;
+  text-transform: uppercase;
+}
+.track-style {
+  color: var(--sumi);
+  border-bottom: 1px solid var(--sumi-light);
+  padding-bottom: 2px;
+}
+.track-info .track-dot {
+  color: var(--sumi-light);
+  font-family: var(--mincho);
+}
+
+.track-desc {
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  font-weight: 300;
+  line-height: 2.05;
+  color: var(--sumi-soft);
+  margin-bottom: 36px;
+  max-width: 640px;
+  letter-spacing: 0.04em;
+}
+
+/* 标签 chips for theme */
+.track-tags {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.track-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mincho);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  color: var(--sumi-soft);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--kagi);
+}
+
+/* ============================================================
+   PLAYER · 演奏
+   ============================================================ */
 .player {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
   padding: 8px 0;
-  user-select: none;
-  -webkit-user-select: none;
 }
 
 .player-btn {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  border: 1px solid var(--border);
+  border: 1px solid var(--sumi);
   background: transparent;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text);
-  transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
-  padding: 0;
+  color: var(--sumi);
+  transition: all var(--d-fast) var(--ease-quiet);
+  position: relative;
+  overflow: hidden;
 }
-
 .player-btn:hover {
-  border-color: var(--text);
+  background: var(--sumi);
+  color: var(--washi);
+  transform: scale(1.04);
 }
-
-.player-btn.on {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--bg);
-}
-
 .player-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
 }
-
-.player-icon-play  { display: block; margin-left: 2px; }
-.player-icon-pause { display: none; }
-
-/* Progress */
+.player-btn.on {
+  background: var(--shu);
+  border-color: var(--shu);
+  color: var(--washi);
+}
+.player-btn.on:hover {
+  background: var(--sumi);
+  border-color: var(--sumi);
+}
+.player-btn .player-icon-pause { display: none; }
+.player-btn.on .player-icon-play { display: none; }
+.player-btn.on .player-icon-pause { display: block; }
 
 .player-bar-wrap {
   flex: 1;
   min-width: 0;
-  height: 26px;
+  height: 32px;
   display: flex;
   align-items: center;
   cursor: pointer;
+  position: relative;
 }
 
 .player-bar {
   position: relative;
   width: 100%;
-  height: 1px;
-  background: var(--border);
+  height: 2px;
+  background: var(--kagi);
+  transition: height var(--d-fast) var(--ease-quiet);
 }
-
-.player-bar-buf {
-  position: absolute;
-  inset: 0;
-  background: var(--border-light);
-  width: 0;
-}
+.player-bar-wrap:hover .player-bar { height: 3px; }
 
 .player-bar-pos {
   position: absolute;
   inset: 0;
-  background: var(--text);
   width: 0;
+  background: var(--shu);
   transition: width 0.12s linear;
 }
-
-.player-bar-wrap:hover .player-bar {
-  height: 2px;
+.player-bar-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--shu);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform var(--d-fast) var(--ease-quiet);
+  pointer-events: none;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--shu) 20%, transparent);
 }
-
-/* Time */
+.player-bar-wrap:hover .player-bar-thumb {
+  transform: translate(-50%, -50%) scale(1);
+}
 
 .player-time {
   flex-shrink: 0;
-  font-family: 'Space Mono', monospace;
-  font-size: 0.66rem;
-  color: var(--text-faint);
-  letter-spacing: 0.04em;
-  min-width: 90px;
+  font-family: var(--latin);
+  font-style: italic;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  color: var(--sumi-mid);
+  min-width: 110px;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ---- Song footer ---- */
-
-.song-foot {
-  display: flex;
-  justify-content: space-between;
+/* ============================================================
+   LYRIC · 詩
+   ============================================================ */
+.lyric-toggle {
+  display: inline-flex;
   align-items: center;
-}
-
-.song-len {
-  font-family: 'Space Mono', monospace;
-  font-size: 0.66rem;
-  color: var(--text-faint);
-  letter-spacing: 0.06em;
-}
-
-/* ---- Lyrics ---- */
-
-.lyric-btn {
-  border: none;
-  background: none;
-  font-family: inherit;
-  font-size: 0.75rem;
-  color: var(--text-light);
+  gap: 12px;
+  font-family: var(--mincho);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  color: var(--sumi-mid);
+  padding: 10px 0;
+  margin-top: 24px;
+  border-bottom: 1px solid transparent;
+  transition: all var(--d-fast) var(--ease-quiet);
   cursor: pointer;
-  padding: 2px 0;
-  letter-spacing: 0.06em;
-  transition: color 0.25s ease;
+}
+.lyric-toggle:hover {
+  color: var(--sumi);
+  border-bottom-color: var(--sumi);
+}
+.lyric-toggle-mark {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  transition: background var(--d-fast) var(--ease-quiet);
+}
+.lyric-toggle[aria-expanded="true"] {
+  color: var(--sumi);
+}
+.lyric-toggle[aria-expanded="true"] .lyric-toggle-mark {
+  background: var(--shu);
+  border-color: var(--shu);
 }
 
-.lyric-btn:hover,
-.lyric-btn.on {
-  color: var(--text);
+.lyric {
+  margin-top: 28px;
+  animation: lyricIn var(--d-mid) var(--ease-quiet);
 }
-
-.lyric-body {
-  display: none;
-  margin-top: 20px;
-  padding: 22px 24px;
-  font-size: 0.83rem;
-  line-height: 2.3;
-  color: var(--text-mid);
-  font-weight: 300;
-  background: var(--hover);
-  border-radius: 3px;
-  border-left: 1px solid var(--border);
-  letter-spacing: 0.02em;
-}
-
-.lyric-body.open {
-  display: block;
-  animation: lyricIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
+.lyric[hidden] { display: none; }
 @keyframes lyricIn {
-  from { opacity: 0; transform: translateY(-6px); }
+  from { opacity: 0; transform: translateY(-12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ---- Footer ---- */
-
-.footer {
-  margin-top: 72px;
+.lyric-inner {
+  padding: 40px 48px;
+  font-family: var(--mincho);
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 2.6;
+  color: var(--sumi-soft);
+  background: var(--washi-soft);
+  border-left: 2px solid var(--shu);
+  letter-spacing: 0.06em;
+  white-space: pre-line;
+  border-radius: 0 2px 2px 0;
+  max-height: 480px;
+  overflow-y: auto;
+  position: relative;
 }
 
-/* ---- Responsive ---- */
+/* 和纸纹理 lyric box */
+.lyric-inner::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  font-family: var(--mincho);
+  font-size: 0.7rem;
+  color: var(--sumi-light);
+  letter-spacing: 0.4em;
+}
+.lyric-inner.with-text::before {
+  content: '詩';
+}
 
+/* 滚动条 */
+.lyric-inner::-webkit-scrollbar { width: 4px; }
+.lyric-inner::-webkit-scrollbar-track { background: transparent; }
+.lyric-inner::-webkit-scrollbar-thumb {
+  background: var(--kagi);
+  border-radius: 2px;
+}
+
+/* ============================================================
+   LOADING & ERROR
+   ============================================================ */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 120px 0;
+}
+.loading-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sumi-light);
+  animation: loadDot 1.6s ease-in-out infinite;
+}
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes loadDot {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.7); }
+  40%           { opacity: 1; transform: scale(1); }
+}
+
+.error {
+  font-family: var(--mincho);
+  font-size: 1rem;
+  color: var(--sumi-mid);
+  text-align: center;
+  padding: 120px 0;
+  letter-spacing: 0.2em;
+}
+
+/* ============================================================
+   ABOUT · 跋
+   ============================================================ */
+.about {
+  padding-top: 60px;
+  padding-bottom: 120px;
+  position: relative;
+}
+.about-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+}
+.about-mark {
+  font-family: var(--mincho);
+  font-size: 1.6rem;
+  color: var(--shu);
+  margin-bottom: 32px;
+  letter-spacing: 0.6em;
+  text-indent: 0.6em;
+  font-weight: 300;
+}
+.about-text {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-weight: 300;
+  line-height: 2.3;
+  color: var(--sumi-soft);
+  letter-spacing: 0.08em;
+  margin-bottom: 32px;
+}
+.about-text em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--sumi);
+  border-bottom: 1px solid var(--shu);
+  padding-bottom: 1px;
+}
+.about-text-quiet {
+  font-size: 0.92rem;
+  color: var(--sumi-mid);
+  line-height: 2.1;
+  margin-top: 24px;
+}
+.about-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 40px 0;
+  font-family: var(--mincho);
+  color: var(--sumi-light);
+  letter-spacing: 0.6em;
+}
+.about-divider::before,
+.about-divider::after {
+  content: '';
+  width: 60px;
+  height: 1px;
+  background: var(--kagi);
+}
+
+/* ============================================================
+   FOOTER · 落款
+   ============================================================ */
+.footer {
+  padding-top: 40px;
+  padding-bottom: 56px;
+  border-top: 1px solid var(--kagi);
+}
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  color: var(--sumi-mid);
+  text-transform: uppercase;
+}
+.footer-inner > * {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.footer-seal {
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--shu);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--shu);
+  font-family: var(--mincho);
+  font-size: 0.65rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.footer-link {
+  color: var(--sumi-soft);
+  border-bottom: 1px solid var(--kagi);
+  padding-bottom: 2px;
+  transition: all var(--d-fast) var(--ease-quiet);
+}
+.footer-link:hover {
+  color: var(--sumi);
+  border-bottom-color: var(--sumi);
+}
+
+/* ============================================================
+   MINI PLAYER · 床の琴
+   ============================================================ */
+.mini-player {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(24px);
+  z-index: 40;
+  background: color-mix(in oklab, var(--washi) 92%, transparent);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--kagi);
+  border-radius: 100px;
+  padding: 12px 16px 12px 24px;
+  box-shadow:
+    0 2px 8px color-mix(in oklab, var(--sumi) 4%, transparent),
+    0 24px 64px color-mix(in oklab, var(--sumi) 12%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--d-mid) var(--ease-quiet),
+              transform var(--d-mid) var(--ease-quiet);
+}
+.mini-player[data-show="true"] {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.mini-player-inner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 320px;
+  max-width: 540px;
+}
+.mini-info {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.mini-num {
+  font-family: var(--mincho);
+  font-size: 0.75rem;
+  color: var(--shu);
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+.mini-title {
+  font-family: var(--serif);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--sumi);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.04em;
+}
+.mini-bar-wrap {
+  flex: 1;
+  min-width: 80px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.mini-bar {
+  position: relative;
+  width: 100%;
+  height: 2px;
+  background: var(--kagi);
+}
+.mini-bar-pos {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: var(--shu);
+  transition: width 0.1s linear;
+}
+.mini-time {
+  font-family: var(--latin);
+  font-style: italic;
+  font-size: 0.72rem;
+  color: var(--sumi-mid);
+  font-variant-numeric: tabular-nums;
+  min-width: 44px;
+  text-align: right;
+}
+.mini-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--sumi);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sumi);
+  transition: all var(--d-fast) var(--ease-quiet);
+}
+.mini-btn:hover {
+  background: var(--sumi);
+  color: var(--washi);
+}
+.mini-btn.on {
+  background: var(--shu);
+  border-color: var(--shu);
+  color: var(--washi);
+}
+.mini-btn .mini-icon-pause { display: none; }
+.mini-btn.on .mini-icon-play { display: none; }
+.mini-btn.on .mini-icon-pause { display: block; }
+
+/* ============================================================
+   TRACK STAGGER · 入場の演出
+   ============================================================ */
+.track {
+  animation: trackIn var(--d-slow) var(--ease) backwards;
+}
+.track:nth-child(2) { animation-delay: 0.06s; }
+.track:nth-child(3) { animation-delay: 0.12s; }
+.track:nth-child(4) { animation-delay: 0.18s; }
+.track:nth-child(5) { animation-delay: 0.24s; }
+@keyframes trackIn {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .track { animation: none !important; }
+}
+
+/* ============================================================
+   INTRO ANIMATION · 序の演出
+   ============================================================ */
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--washi);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: introOut var(--d-deep) var(--ease-quiet) 0.3s forwards;
+}
+@keyframes introOut {
+  0%   { opacity: 1; }
+  60%  { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+.intro-circle {
+  width: 80px;
+  height: 80px;
+  border: 1.5px solid var(--sumi);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mincho);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--shu);
+  animation: introScale var(--d-deep) var(--ease-quiet) forwards;
+}
+@keyframes introScale {
+  0%   { transform: scale(0.6); opacity: 0; }
+  40%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(8); opacity: 0; }
+}
+
+/* ============================================================
+   RESPONSIVE — tablet
+   ============================================================ */
+@media (max-width: 960px) {
+  .hero { padding-top: 120px; padding-bottom: 100px; }
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+  .meta-grid { grid-template-columns: 1fr 1fr; gap: 24px 32px; }
+  .hero-divider { margin-top: 80px; }
+
+  .track-section { margin-bottom: 140px; }
+  .track-section-header { gap: 16px; margin-bottom: 48px; }
+  .track-section-num { font-size: 1.4rem; }
+  .track-section-title { font-size: 0.85rem; letter-spacing: 0.3em; }
+  .track-section-romaji { display: none; }
+
+  .track { padding: 56px 0; }
+  .track-no { width: 100px; top: 56px; }
+  .track-no-kanji { font-size: 1.1rem; }
+  .track-body { margin-left: 100px; max-width: none; }
+  .track-titles { gap: 14px; }
+  .track-info { font-size: 0.62rem; gap: 12px; }
+  .lyric-inner { padding: 32px 32px; }
+}
+
+/* ============================================================
+   RESPONSIVE — mobile
+   ============================================================ */
 @media (max-width: 640px) {
-  .container {
-    padding: 80px 20px 64px;
-  }
+  .nav { height: 64px; }
+  .nav-meta { display: none; }
+  .nav-brand-romaji { display: none; }
+  .nav-actions { gap: 16px; }
 
-  .hero {
-    margin-bottom: 64px;
+  .hero { padding-top: 80px; padding-bottom: 72px; }
+  .hero-bg-circle {
+    width: 500px;
+    height: 500px;
+    top: -160px;
+    right: -180px;
+    opacity: 0.35;
   }
+  .hero-bg-circle::before,
+  .hero-bg-circle::after { display: none; }
+  .hero-grid { gap: 48px; }
+  .hero-eyebrow { font-size: 0.6rem; margin-bottom: 32px; letter-spacing: 0.18em; }
+  .hero-title-ja { font-size: 3.6rem; letter-spacing: 0.02em; }
+  .hero-title-zh { font-size: 1.5rem; letter-spacing: 0.24em; gap: 12px; }
+  .hero-title-zh-romaji { font-size: 0.6rem; }
+  .hero-sub { font-size: 0.95rem; line-height: 2; }
+  .hero-divider { font-size: 0.7rem; letter-spacing: 0.28em; margin-top: 64px; }
+  .meta-grid { grid-template-columns: 1fr 1fr; gap: 20px 20px; }
 
-  .hero-line {
-    height: 40px;
-    margin-bottom: 28px;
+  .track-section { margin-bottom: 100px; }
+  .track-section-header {
+    flex-wrap: wrap;
+    gap: 12px;
   }
+  .track-section-title { font-size: 0.78rem; }
 
-  .hero-name {
-    font-size: 2.2rem;
+  .track { padding: 48px 0; }
+  .track-no {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
   }
-
-  .song {
-    grid-template-columns: 36px 1fr;
-    padding: 32px 0;
+  .track-no-line { width: 20px; }
+  .track-no-kanji { font-size: 1rem; }
+  .track-no-num { font-size: 0.7rem; }
+  .track-body { margin-left: 0; }
+  .track-titles { gap: 10px; margin-bottom: 14px; }
+  .track-title { font-size: 1.5rem; letter-spacing: 0.08em; }
+  .track-subtitle { font-size: 0.85rem; }
+  .track-info {
+    font-size: 0.58rem;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
   }
+  .track-desc { font-size: 0.92rem; line-height: 1.95; margin-bottom: 28px; }
 
-  .song-title {
-    font-size: 1.2rem;
-  }
+  .player { gap: 12px; }
+  .player-btn { width: 40px; height: 40px; }
+  .player-time { min-width: 86px; font-size: 0.72rem; }
+  .lyric-inner { padding: 24px 22px; font-size: 0.92rem; line-height: 2.3; }
+  .lyric-toggle { font-size: 0.7rem; }
 
-  .player-time {
-    min-width: 80px;
+  .about-text { font-size: 0.95rem; line-height: 2.1; }
+  .about-text-quiet { font-size: 0.82rem; }
+
+  .footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
     font-size: 0.62rem;
   }
 
-  .lyric-body {
-    padding: 16px 16px;
-    font-size: 0.8rem;
-    line-height: 2.1;
+  .mini-player {
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    transform: translateY(20px);
+    border-radius: 18px;
+    padding: 12px 14px 12px 18px;
   }
+  .mini-player[data-show="true"] { transform: translateY(0); }
+  .mini-player-inner {
+    min-width: 0;
+    max-width: none;
+    gap: 12px;
+  }
+  .mini-bar-wrap { min-width: 60px; }
+  .mini-title { font-size: 0.82rem; }
+  .mini-info { flex: 1 1 auto; }
 }
 
-@media (max-width: 400px) {
-  .container {
-    padding: 56px 16px 48px;
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
-
-  .song {
-    grid-template-columns: 28px 1fr;
-    padding: 28px 0;
-  }
-
-  .song-num {
-    font-size: 0.6rem;
-  }
-
-  .song-title {
-    font-size: 1.1rem;
-  }
-
-  .player-time {
-    min-width: 72px;
-    font-size: 0.6rem;
-  }
+  html { scroll-behavior: auto; }
+  .track { opacity: 1; transform: none; }
+  .intro-overlay { display: none; }
 }
