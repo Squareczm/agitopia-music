@@ -68,7 +68,7 @@ async function loadSongs() {
     card.querySelector('.song-subtitle').textContent = song.subtitle || '';
     card.querySelector('.song-desc').textContent = song.description || '';
     card.querySelector('.song-duration').textContent = song.duration || '';
-    card.querySelector('source').src = `/audio/${song.file}`;
+    card.querySelector('source').src = `https://audio.ainovalife.com/${song.file}`;
 
     // Lyrics toggle
     const lyricsDiv = card.querySelector('.lyrics-content');

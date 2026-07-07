@@ -41,7 +41,8 @@ echo "📤 Uploading to R2..."
 wrangler r2 object put "ainovalife-music/$SONG_ID.mp3" \
   --file "$MP3_FILE" \
   --content-type audio/mpeg \
-  --cache-control "public, max-age=31536000, immutable"
+  --cache-control "public, max-age=31536000, immutable" \
+  --remote
 
 # --- Step 2: Update songs.json ---
 echo "📝 Updating songs.json..."

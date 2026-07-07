@@ -6,12 +6,6 @@
   "assets": {
     "directory": "public"
   },
-  "r2_buckets": [
-    {
-      "bucket_name": "ainovalife-music",
-      "binding": "ainovalife_music"
-    }
-  ],
   "routes": [
     { "pattern": "music.ainovalife.com", "custom_domain": true }
   ]
