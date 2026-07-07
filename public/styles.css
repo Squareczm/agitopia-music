@@ -10,7 +10,6 @@
   --border: #e8e4dc;
   --cover-bg: #1a1a1a;
   --cover-text: #fff;
-  --plyr-color-main: #c0392b;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -139,12 +138,13 @@ body {
 }
 
 /* Plyr overrides */
-.plyr {
+audio {
+  width: 100%;
+  margin-bottom: 12px;
   border-radius: 8px;
-  margin-bottom: 16px;
 }
-.plyr--audio .plyr__controls {
-  padding: 8px 12px;
+audio::-webkit-media-controls-panel {
+  background: #f8f6f2;
 }
 
 .lyrics-toggle {
