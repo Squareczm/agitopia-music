@@ -50,7 +50,7 @@ NEW_ENTRY=$(cat <<JSON
     "id": "$SONG_ID",
     "title": "$TITLE",
     "subtitle": "${SUBTITLE:-}",
-    "artist": "AGITopia",
+    "artist": "James Cheng",
     "style": "$STYLE",
     "duration": "$DURATION",
     "date": "$DATE",
