@@ -3,111 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>James — Music</title>
+<title>James 的音乐小世界</title>
 <meta name="description" content="James 的个人音乐作品">
-<meta property="og:title" content="James — Music">
-<meta property="og:image" content="/avatar.png">
 <link rel="stylesheet" href="styles.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div class="bg-noise"></div>
-
-<section class="hero">
-  <div class="hero-bg">
-    <div class="hero-bg-overlay"></div>
-  </div>
-  <div class="hero-content">
-    <div class="hero-avatar">
-      <img src="/avatar.png" alt="James" width="72" height="72">
-    </div>
-    <h1 class="hero-name">James</h1>
-    <p class="hero-statement">在代码与旋律之间，找到属于碳基生命的温度。</p>
-    <div class="hero-scroll">
-      <svg viewBox="0 0 24 24" width="18" height="18">
-        <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="1.2"/>
-        <polyline points="7,14 12,19 17,14" stroke="currentColor" stroke-width="1.2" fill="none"/>
-      </svg>
-    </div>
-  </div>
-</section>
+<div class="paper"></div>
 
 <div class="container">
 
+<header class="hero">
+  <div class="hero-line"></div>
+  <h1 class="hero-name">James</h1>
+  <p class="hero-sub">音乐小世界</p>
+</header>
+
 <main id="song-list">
-  <div class="loading">Loading...</div>
+  <div class="loading">Loading</div>
 </main>
 
-<footer class="footer">
-  <div class="footer-line"></div>
-</footer>
+<footer class="footer"></footer>
 
 </div>
 
 <template id="song-template">
-  <article class="song" data-index="">
-    <div class="song-number"></div>
-    <div class="song-body">
-      <div class="song-header">
-        <div class="song-title-group">
-          <h2 class="song-title"></h2>
-          <span class="song-style"></span>
-        </div>
-      </div>
+  <article class="song">
+    <span class="song-num"></span>
+    <div class="song-main">
+      <header class="song-head">
+        <h2 class="song-title"></h2>
+        <span class="song-tag"></span>
+      </header>
       <p class="song-desc"></p>
 
-      <div class="player" data-audio-url="">
-        <button class="player-play" aria-label="播放">
-          <svg class="player-icon-play" viewBox="0 0 24 24" width="20" height="20">
-            <polygon points="6,3 20,12 6,21" fill="currentColor"/>
-          </svg>
-          <svg class="player-icon-pause" viewBox="0 0 24 24" width="20" height="20">
-            <rect x="5" y="3" width="5" height="18" rx="1" fill="currentColor"/>
-            <rect x="14" y="3" width="5" height="18" rx="1" fill="currentColor"/>
-          </svg>
+      <div class="player">
+        <button class="player-btn" aria-label="播放/暂停">
+          <svg class="player-icon-play" viewBox="0 0 24 24" width="18" height="18"><polygon points="7,4 19,12 7,20"/></svg>
+          <svg class="player-icon-pause" viewBox="0 0 24 24" width="18" height="18"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
         </button>
-        <div class="player-progress-wrap">
-          <div class="player-progress">
-            <div class="player-progress-buffered"></div>
-            <div class="player-progress-played"></div>
-            <div class="player-progress-thumb"></div>
+        <div class="player-bar-wrap">
+          <div class="player-bar">
+            <div class="player-bar-buf"></div>
+            <div class="player-bar-pos"></div>
           </div>
         </div>
-        <div class="player-time">
-          <span class="player-current">0:00</span>
-          <span class="player-sep">/</span>
-          <span class="player-duration">0:00</span>
-        </div>
-        <button class="player-volume" aria-label="音量">
-          <svg class="player-icon-volume-on" viewBox="0 0 24 24" width="16" height="16">
-            <polygon points="11,5 6,9 2,9 2,15 6,15 11,19" fill="currentColor"/>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" stroke-width="2" fill="none"/>
-          </svg>
-          <svg class="player-icon-volume-off" viewBox="0 0 24 24" width="16" height="16">
-            <polygon points="11,5 6,9 2,9 2,15 6,15 11,19" fill="currentColor"/>
-            <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" stroke-width="2"/>
-            <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        </button>
+        <span class="player-time"></span>
       </div>
 
-      <div class="song-footer">
-        <button class="lyrics-toggle">
-          <span class="lyrics-toggle-icon">
-            <svg viewBox="0 0 12 12" width="10" height="10">
-              <line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.5"/>
-              <line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.5"/>
-            </svg>
-          </span>
-          <span class="lyrics-toggle-text">歌词</span>
-        </button>
-        <span class="song-duration-mono"></span>
+      <div class="song-foot">
+        <button class="lyric-btn">歌词</button>
+        <span class="song-len"></span>
       </div>
 
-      <div class="lyrics-content"></div>
+      <div class="lyric-body"></div>
     </div>
   </article>
 </template>
@@ -116,246 +68,154 @@
 (function() {
   'use strict';
 
-  let activePlayer = null;
+  var currentAudio = null;
 
-  function formatTime(sec) {
+  function pad(n) { return n < 10 ? '0' + n : n; }
+  function fmt(sec) {
     if (isNaN(sec) || sec < 0) return '0:00';
-    var m = Math.floor(sec / 60);
-    var s = Math.floor(sec % 60);
-    return m + ':' + (s < 10 ? '0' + s : s);
+    return Math.floor(sec / 60) + ':' + pad(Math.floor(sec % 60));
   }
 
-  function initPlayer(article, song) {
-    var playerEl = article.querySelector('.player');
-    var audioUrl = 'https://audio.ainovalife.com/' + song.file;
-    playerEl.dataset.audioUrl = audioUrl;
-
+  function bind(el, song) {
     var audio = new Audio();
     audio.preload = 'metadata';
+    var url = 'https://audio.ainovalife.com/' + song.file;
 
-    var playBtn = playerEl.querySelector('.player-play');
-    var iconPlay = playerEl.querySelector('.player-icon-play');
-    var iconPause = playerEl.querySelector('.player-icon-pause');
-    var progressWrap = playerEl.querySelector('.player-progress-wrap');
-    var progressPlayed = playerEl.querySelector('.player-progress-played');
-    var progressBuffered = playerEl.querySelector('.player-progress-buffered');
-    var progressThumb = playerEl.querySelector('.player-progress-thumb');
-    var currentEl = playerEl.querySelector('.player-current');
-    var durationEl = playerEl.querySelector('.player-duration');
-    var volumeBtn = playerEl.querySelector('.player-volume');
-    var iconVolOn = playerEl.querySelector('.player-icon-volume-on');
-    var iconVolOff = playerEl.querySelector('.player-icon-volume-off');
+    var btn = el.querySelector('.player-btn');
+    var icoPlay = el.querySelector('.player-icon-play');
+    var icoPause = el.querySelector('.player-icon-pause');
+    var barWrap = el.querySelector('.player-bar-wrap');
+    var barPos = el.querySelector('.player-bar-pos');
+    var barBuf = el.querySelector('.player-bar-buf');
+    var timeEl = el.querySelector('.player-time');
 
-    audio.volume = 0.75;
-    var isDragging = false;
+    var dragging = false;
 
-    function setPlaying(state) {
-      iconPlay.style.display = state ? 'none' : 'block';
-      iconPause.style.display = state ? 'block' : 'none';
-      if (state) {
-        playBtn.classList.add('is-playing');
-        article.classList.add('is-playing');
-      } else {
-        playBtn.classList.remove('is-playing');
-        article.classList.remove('is-playing');
-      }
+    function setPlay(on) {
+      icoPlay.style.display = on ? 'none' : 'block';
+      icoPause.style.display = on ? 'block' : 'none';
+      btn.classList.toggle('on', on);
+      el.classList.toggle('playing', on);
     }
 
-    function updateProgress() {
+    function tick() {
       if (!audio.duration) return;
-      var pct = (audio.currentTime / audio.duration) * 100;
-      progressPlayed.style.width = pct + '%';
-      progressThumb.style.left = pct + '%';
-      currentEl.textContent = formatTime(audio.currentTime);
+      barPos.style.width = (audio.currentTime / audio.duration * 100) + '%';
+      timeEl.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
     }
 
-    playBtn.addEventListener('click', function() {
-      if (activePlayer && activePlayer !== audio) {
-        activePlayer.pause();
-        setPlaying.call(
-          { playerEl: activePlayer._el, article: activePlayer._article },
-          false
-        );
+    btn.addEventListener('click', function() {
+      if (currentAudio && currentAudio !== audio) {
+        currentAudio.pause();
+        currentAudio._set(false);
       }
-
       if (audio.paused || !audio.src) {
-        if (!audio.src) audio.src = audioUrl;
-        audio.play().catch(function() {});
-        activePlayer = audio;
-        audio._el = playerEl;
-        audio._article = article;
+        if (!audio.src) audio.src = url;
+        audio.play().catch(function(){});
+        currentAudio = audio;
+        audio._set = setPlay;
       } else {
         audio.pause();
-        activePlayer = null;
+        currentAudio = null;
       }
     });
 
-    audio.addEventListener('play', function() { setPlaying(true); });
-    audio.addEventListener('pause', function() { setPlaying(false); });
-    audio.addEventListener('ended', function() { setPlaying(false); activePlayer = null; });
-    audio.addEventListener('timeupdate', updateProgress);
+    audio.addEventListener('play', function() { setPlay(true); });
+    audio.addEventListener('pause', function() { setPlay(false); });
+    audio.addEventListener('ended', function() { setPlay(false); currentAudio = null; });
+    audio.addEventListener('timeupdate', tick);
     audio.addEventListener('loadedmetadata', function() {
-      durationEl.textContent = formatTime(audio.duration);
+      timeEl.textContent = '0:00 / ' + fmt(audio.duration);
     });
     audio.addEventListener('progress', function() {
-      if (audio.buffered.length > 0 && audio.duration) {
-        var pct = (audio.buffered.end(audio.buffered.length - 1) / audio.duration) * 100;
-        if (isFinite(pct)) progressBuffered.style.width = pct + '%';
+      if (audio.buffered.length && audio.duration) {
+        var p = audio.buffered.end(audio.buffered.length - 1) / audio.duration * 100;
+        if (isFinite(p)) barBuf.style.width = p + '%';
       }
     });
 
     function seek(e) {
-      var rect = progressWrap.getBoundingClientRect();
-      var pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      if (audio.duration) {
-        audio.currentTime = pct * audio.duration;
-        updateProgress();
-      }
+      var r = barWrap.getBoundingClientRect();
+      var p = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      if (audio.duration) { audio.currentTime = p * audio.duration; tick(); }
     }
 
-    progressWrap.addEventListener('mousedown', function(e) {
-      isDragging = true;
-      seek(e);
+    barWrap.addEventListener('mousedown', function(e) {
+      dragging = true; seek(e);
       document.addEventListener('mousemove', seek);
-      document.addEventListener('mouseup', stopDrag);
+      document.addEventListener('mouseup', function() {
+        dragging = false;
+        document.removeEventListener('mousemove', seek);
+      }, { once: true });
     });
 
-    function stopDrag() {
-      isDragging = false;
-      document.removeEventListener('mousemove', seek);
-      document.removeEventListener('mouseup', stopDrag);
-    }
-
-    progressWrap.addEventListener('touchstart', function(e) {
-      isDragging = true;
-      seekTouch(e);
-      document.addEventListener('touchmove', seekTouch);
-      document.addEventListener('touchend', stopDragTouch);
-    });
-
-    function seekTouch(e) {
-      var rect = progressWrap.getBoundingClientRect();
-      var pct = Math.max(0, Math.min(1, (e.touches[0].clientX - rect.left) / rect.width));
-      if (audio.duration) {
-        audio.currentTime = pct * audio.duration;
-        updateProgress();
-      }
-    }
-
-    function stopDragTouch() {
-      isDragging = false;
-      document.removeEventListener('touchmove', seekTouch);
-      document.removeEventListener('touchend', stopDragTouch);
-    }
-
-    volumeBtn.addEventListener('click', function() {
-      if (audio.volume > 0) {
-        audio.volume = 0;
-        iconVolOn.style.display = 'none';
-        iconVolOff.style.display = 'block';
-      } else {
-        audio.volume = 0.75;
-        iconVolOn.style.display = 'block';
-        iconVolOff.style.display = 'none';
-      }
-    });
-
-    playerEl.addEventListener('mouseenter', function() {
-      progressThumb.style.opacity = '1';
-    });
-    playerEl.addEventListener('mouseleave', function() {
-      if (!isDragging) progressThumb.style.opacity = '0';
+    barWrap.addEventListener('touchstart', function(e) {
+      dragging = true; seek(e.touches[0]);
+      document.addEventListener('touchmove', function(ev) { seek(ev.touches[0]); });
+      document.addEventListener('touchend', function() {
+        dragging = false;
+      }, { once: true });
     });
   }
 
-  async function loadSongs() {
+  async function init() {
     var list = document.getElementById('song-list');
     var tpl = document.getElementById('song-template');
 
     try { var res = await fetch('/songs.json'); } catch(e) {
-      list.innerHTML = '<p class="error">Failed to load songs.</p>';
-      return;
+      list.innerHTML = '<p class="error">加载失败</p>'; return;
     }
     var songs = await res.json();
     list.innerHTML = '';
 
-    songs.forEach(function(song, i) {
+    songs.forEach(function(s, i) {
       var card = tpl.content.cloneNode(true);
-      var article = card.querySelector('.song');
-      article.dataset.index = i;
+      var el = card.querySelector('.song');
 
-      article.querySelector('.song-number').textContent = String(i + 1).padStart(2, '0');
-      article.querySelector('.song-title').textContent = song.title;
-      article.querySelector('.song-style').textContent = song.style;
-      article.querySelector('.song-desc').textContent = song.description || '';
-      article.querySelector('.song-duration-mono').textContent = song.duration || '';
-      article.querySelector('.player-duration').textContent = song.duration || '0:00';
+      el.querySelector('.song-num').textContent = pad(i + 1);
+      el.querySelector('.song-title').textContent = s.title;
+      el.querySelector('.song-tag').textContent = s.style;
+      el.querySelector('.song-desc').textContent = s.description || '';
+      el.querySelector('.song-len').textContent = s.duration || '';
 
-      var lyricsDiv = article.querySelector('.lyrics-content');
-      var toggleBtn = article.querySelector('.lyrics-toggle');
-      var toggleIcon = toggleBtn.querySelector('.lyrics-toggle-icon');
-      var toggleText = toggleBtn.querySelector('.lyrics-toggle-text');
+      var lyricBody = el.querySelector('.lyric-body');
+      var lyricBtn = el.querySelector('.lyric-btn');
 
-      if (song.lyrics && song.lyrics.trim()) {
-        lyricsDiv.innerHTML = song.lyrics.replace(/\n/g, '<br>');
-        toggleBtn.addEventListener('click', function() {
-          var open = lyricsDiv.classList.toggle('open');
-          toggleIcon.classList.toggle('is-open', open);
-          toggleText.textContent = open ? '收起' : '歌词';
+      if (s.lyrics && s.lyrics.trim()) {
+        lyricBody.innerHTML = s.lyrics.replace(/\n/g, '<br>');
+        lyricBtn.addEventListener('click', function() {
+          var open = lyricBody.classList.toggle('open');
+          lyricBtn.textContent = open ? '收起' : '歌词';
+          lyricBtn.classList.toggle('on', open);
         });
       } else {
-        toggleBtn.style.display = 'none';
+        lyricBtn.style.display = 'none';
       }
 
       list.appendChild(card);
-      initPlayer(article, song);
+      bind(el, s);
     });
 
+    // Scroll reveal
     if ('IntersectionObserver' in window) {
-      var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-          }
-        });
-      }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
-
-      document.querySelectorAll('.song').forEach(function(el) {
-        observer.observe(el);
-      });
+      var obs = new IntersectionObserver(function(es) {
+        es.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('in'); });
+      }, { threshold: 0.15, rootMargin: '0px 0px -30px 0px' });
+      document.querySelectorAll('.song').forEach(function(s) { obs.observe(s); });
     } else {
-      document.querySelectorAll('.song').forEach(function(el) {
-        el.classList.add('visible');
-      });
+      document.querySelectorAll('.song').forEach(function(s) { s.classList.add('in'); });
     }
   }
 
-  loadSongs();
+  init();
 
-  // Parallax on hero background
+  // Subtle paper depth shift
   document.addEventListener('mousemove', function(e) {
-    var x = (e.clientX / window.innerWidth - 0.5) * 10;
-    var y = (e.clientY / window.innerHeight - 0.5) * 10;
-    var heroBg = document.querySelector('.hero-bg');
-    if (heroBg) heroBg.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+    var x = (e.clientX / window.innerWidth - 0.5) * 3;
+    var y = (e.clientY / window.innerHeight - 0.5) * 3;
+    var paper = document.querySelector('.paper');
+    if (paper) paper.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
   });
-
-  // Smooth scroll to songs on scroll indicator click
-  document.querySelector('.hero-scroll').addEventListener('click', function() {
-    var container = document.querySelector('.container');
-    if (container) container.scrollIntoView({ behavior: 'smooth' });
-  });
-
-  // Fade hero on scroll
-  window.addEventListener('scroll', function() {
-    var scrollY = window.pageYOffset;
-    var hero = document.querySelector('.hero');
-    if (hero) {
-      var opacity = Math.max(0, 1 - scrollY / (hero.offsetHeight * 0.7));
-      hero.style.opacity = Math.min(1, opacity);
-    }
-  });
-
 })();
 </script>
 
