@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGITopia Music</title>
+<meta name="description" content="AGITopia 社群原创音乐 · AI 生成的碳基之歌">
+<meta property="og:title" content="AGITopia Music">
+<meta property="og:description" content="不为AI所困 · 碳基生命的音乐表达">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
+</head>
+<body>
+
+<div class="container">
+
+<header class="site-header">
+  <h1>AGITopia <span class="muted">Music</span></h1>
+  <p class="tagline">碳基生命的声音 · AI 时代的社区原创</p>
+</header>
+
+<main id="song-list">
+  <!-- populated by JS from songs.json -->
+</main>
+
+<footer class="site-footer">
+  <p>不为AI所困 · <a href="https://github.com/Squareczm/context-infrastructure">AGITopia Community</a></p>
+  <p class="tiny">Songs generated with AI · Self-hosted on Cloudflare R2</p>
+</footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
+<script>
+async function loadSongs() {
+  const res = await fetch('/songs.json');
+  const songs = await res.json();
+  const list = document.getElementById('song-list');
+
+  songs.forEach(song => {
+    const card = document.createElement('article');
+    card.className = 'song-card';
+    card.id = `song-${song.id}`;
+    card.innerHTML = `
+      <div class="song-cover">
+        <div class="cover-placeholder">
+          <span>${song.title[0]}</span>
+        </div>
+      </div>
+      <div class="song-body">
+        <div class="song-meta-top">
+          <span class="song-style">${song.style}</span>
+          <span class="song-date">${song.date}</span>
+        </div>
+        <h2 class="song-title">${song.title}</h2>
+        <p class="song-subtitle">${song.subtitle}</p>
+        <p class="song-desc">${song.description}</p>
+        <audio class="plyr-player" controls>
+          <source src="/audio/${song.file}" type="audio/mpeg">
+        </audio>
+        <div class="song-links">
+          ${song.lyrics ? `<a href="${song.lyrics}" target="_blank" class="link-lyrics">歌词</a>` : ''}
+          <span class="song-duration">${song.duration}</span>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+
+  // Initialize Plyr on all audio elements
+  document.querySelectorAll('.plyr-player').forEach(el => {
+    new Plyr(el, {
+      controls: ['play', 'progress', 'current-time', 'duration', 'volume'],
+      preload: 'metadata'
+    });
+  });
+}
+
+loadSongs();
+</script>
+
+</body>
+</html>

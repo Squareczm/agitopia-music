@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "music-site",
+  "compatibility_date": "2024-12-01",
+  "workers_dev": true,
+  "assets": {
+    "directory": "public"
+  },
+  "r2_buckets": [
+    {
+      "bucket_name": "ainovalife-music",
+      "binding": "ainovalife_music"
+    }
+  ],
+  "routes": [
+    { "pattern": "music.ainovalife.com", "custom_domain": true }
+  ]
+}

@@ -1,0 +1,202 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+:root {
+  --bg: #faf8f5;
+  --card-bg: #fff;
+  --text: #1a1a1a;
+  --text-secondary: #666;
+  --text-tertiary: #999;
+  --accent: #c0392b;
+  --border: #e8e4dc;
+  --cover-bg: #1a1a1a;
+  --cover-text: #fff;
+  --plyr-color-main: #c0392b;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* Header */
+.site-header {
+  text-align: center;
+  margin-bottom: 48px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header h1 {
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.site-header h1 .muted {
+  font-weight: 300;
+  color: var(--text-tertiary);
+}
+
+.tagline {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+/* Song Card */
+.song-card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 32px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.song-cover {
+  background: var(--cover-bg);
+  padding: 48px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+
+.cover-placeholder span {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--cover-text);
+}
+
+.song-body {
+  padding: 24px 28px 28px;
+}
+
+.song-meta-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.song-style {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: #fdf0ee;
+  padding: 2px 10px;
+  border-radius: 3px;
+}
+
+.song-date {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+.song-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.song-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+
+.song-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* Plyr overrides */
+.plyr {
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.plyr--audio .plyr__controls {
+  padding: 8px 12px;
+}
+
+.song-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+.link-lyrics {
+  font-size: 0.82rem;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.link-lyrics:hover {
+  text-decoration: underline;
+}
+
+.song-duration {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
+/* Footer */
+.site-footer {
+  text-align: center;
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--text-tertiary);
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+.site-footer a {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+.site-footer a:hover {
+  color: var(--accent);
+}
+.site-footer .tiny {
+  margin-top: 6px;
+  font-size: 0.72rem;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 80px 0;
+  color: var(--text-tertiary);
+}
+.empty-state .emoji { font-size: 3rem; margin-bottom: 16px; }
+.empty-state h2 { font-size: 1.2rem; margin-bottom: 8px; color: var(--text-secondary); }
