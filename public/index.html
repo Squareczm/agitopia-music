@@ -7,7 +7,7 @@
 <meta name="description" content="James Cheng 的个人音乐作品">
 <meta property="og:title" content="James Cheng · Music">
 <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
+<!-- plyr removed for debugging -->
 </head>
 <body>
 
@@ -40,7 +40,7 @@
       <h2 class="song-title"></h2>
       <p class="song-subtitle"></p>
       <p class="song-desc"></p>
-      <audio class="plyr-player" controls>
+      <audio controls preload="metadata">
         <source type="audio/mpeg">
       </audio>
       <button class="lyrics-toggle">展开歌词</button>
@@ -50,7 +50,6 @@
   </article>
 </template>
 
-<script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
 <script>
 async function loadSongs() {
   const res = await fetch('/songs.json');
@@ -67,8 +66,10 @@ async function loadSongs() {
     card.querySelector('.song-title').textContent = song.title;
     card.querySelector('.song-subtitle').textContent = song.subtitle || '';
     card.querySelector('.song-desc').textContent = song.description || '';
-    card.querySelector('.song-duration').textContent = song.duration || '';
-    card.querySelector('source').src = `https://audio.ainovalife.com/${song.file}`;
+
+    const audio = card.querySelector('audio');
+    audio.querySelector('source').src = `https://audio.ainovalife.com/${song.file}`;
+    audio.querySelector('source').type = 'audio/mpeg';
 
     // Lyrics toggle
     const lyricsDiv = card.querySelector('.lyrics-content');
@@ -84,21 +85,9 @@ async function loadSongs() {
       toggleBtn.style.display = 'none';
     }
 
-    // Duration on toggle line
     card.querySelector('.song-duration').textContent = song.duration || '';
-
     list.appendChild(card);
   });
-
-  // Init Plyr
-  if (typeof Plyr !== 'undefined') {
-    document.querySelectorAll('.plyr-player').forEach(el => {
-      new Plyr(el, {
-        controls: ['play', 'progress', 'current-time', 'duration', 'volume'],
-        preload: 'metadata'
-      });
-    });
-  }
 }
 
 loadSongs();
