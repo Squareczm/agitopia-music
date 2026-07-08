@@ -1,115 +1,143 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#f5f1e8">
-<meta name="description" content="音の記録 · 声音志 — James 写给自己的声音志，按时间顺序排好的私人心境。">
-<title>声音志 · Sound Journal · 音の記録</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e0d0a">
+<meta name="description" content="声音志 — James 写给自己的声音志，按时间顺序排好的私人心境。">
+<title>声音志 · Sound Journal</title>
+<meta property="og:title" content="声音志 · Sound Journal">
+<meta property="og:description" content="James 写给自己的声音志，按时间顺序排好的私人心境。">
+<meta property="og:image" content="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&q=80&v=1">
+<meta property="og:url" content="https://music.ainovalife.com/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&q=80&v=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;700&family=Noto+Serif+JP:wght@300;400;500;700&family=Noto+Sans+SC:wght@300;400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;500;700&family=Noto+Serif+JP:wght@200;300;400;500;700&family=Noto+Sans+SC:wght@300;400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap">
 <link rel="stylesheet" href="styles.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='none' stroke='%23a8341c' stroke-width='4'/%3E%3Ctext x='50' y='62' text-anchor='middle' font-family='serif' font-size='42' font-weight='700' fill='%23a8341c'%3E声%3C/text%3E%3C/svg%3E">
 </head>
 <body>
 
-<!-- ─────────── intro ─────────── -->
+<!-- ═══════ 光标柔光 ═══════ -->
+<div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
+
+<!-- ═══════ 环境光球 ═══════ -->
+<div class="ambient-orb ambient-orb-1" aria-hidden="true"></div>
+<div class="ambient-orb ambient-orb-2" aria-hidden="true"></div>
+
+<!-- ═══════ 和风粒子背景 ═══════ -->
+<canvas class="ambient-canvas" id="ambient-canvas" aria-hidden="true"></canvas>
+
+<!-- ═══════ 开场 ═══════ -->
 <div class="intro-overlay" aria-hidden="true">
-  <div class="intro-circle">声</div>
+  <div class="intro-seal">
+    <span class="intro-seal-char">声</span>
+    <span class="intro-seal-ring"></span>
+  </div>
 </div>
 
-<!-- ─────────── nav ─────────── -->
-<nav class="nav frame" aria-label="主导航">
-  <a class="nav-brand" href="#top">
-    <span class="nav-brand-seal">声</span>
-    <span class="nav-brand-text">声音志</span>
-    <span class="nav-brand-romaji">oto no kiroku</span>
-  </a>
-  <div class="nav-actions">
-    <span class="nav-meta" id="nav-time">— —</span>
-    <button class="theme-toggle" id="theme-toggle" aria-label="切换主题" title="切换主题">
-      <svg class="icon-sun" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
-        <circle cx="12" cy="12" r="4"/>
-        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-      </svg>
-      <svg class="icon-moon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-      </svg>
-    </button>
+<!-- ═══════ 导航 ═══════ -->
+<nav class="nav" aria-label="主导航">
+  <div class="nav-inner frame">
+    <a class="nav-brand" href="#top">
+      <span class="nav-brand-seal">声</span>
+      <span class="nav-brand-text">声音志</span>
+      <span class="nav-brand-romaji">oto no kiroku</span>
+    </a>
+    <div class="nav-actions">
+      <span class="nav-meta" id="nav-time">— —</span>
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
+          <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
   </div>
 </nav>
 
-<!-- ─────────── hero ─────────── -->
-<header class="hero frame" id="top">
-  <div class="hero-bg" aria-hidden="true">
-    <div class="hero-bg-circle"></div>
-  </div>
+<!-- ═══════ 主视觉 ═══════ -->
+<header class="hero" id="top">
+  <div class="hero-inner frame">
+    <div class="hero-viz-wrap" aria-hidden="true">
+      <canvas class="hero-viz" id="hero-viz"></canvas>
+    </div>
 
-  <div class="hero-grid">
-    <div class="hero-left">
+    <div class="hero-content">
       <div class="hero-eyebrow">
         <span class="hero-eyebrow-line"></span>
-        <span>Sound Journal · 2026 —</span>
+        <span class="hero-eyebrow-text">Sound Journal · 2026</span>
       </div>
 
       <h1 class="hero-title">
-        <span class="hero-title-ja">音<span class="stroke">楽</span>記録</span>
-        <span class="hero-title-zh">
-          <span>声音志</span>
-          <span class="hero-title-zh-romaji">A chronicle of private moods</span>
-        </span>
+        <span class="hero-title-line hero-title-line-1" data-text="音">音</span>
+        <span class="hero-title-line hero-title-line-2" data-text="乐">乐</span>
+        <span class="hero-title-line hero-title-line-3" data-text="日">日</span>
+        <span class="hero-title-line hero-title-line-4" data-text="记">记</span>
       </h1>
 
-      <p class="hero-sub">
+      <div class="hero-subtitle">
+        <span class="hero-subtitle-zh">声音志</span>
+        <span class="hero-subtitle-romaji">A chronicle of private moods</span>
+      </div>
+
+      <p class="hero-desc">
         写给自己的声音。<br>
         写给愿意 <em>停下来听</em> 的人。
       </p>
-    </div>
 
-    <aside class="hero-meta">
-      <dl class="meta-grid">
-        <div class="meta-cell">
-          <dt>Artist</dt>
-          <dd>James Cheng</dd>
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Artist</span>
+          <span class="hero-meta-value">James</span>
         </div>
-        <div class="meta-cell">
-          <dt>From</dt>
-          <dd>深圳 · Shenzhen</dd>
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">From</span>
+          <span class="hero-meta-value">深圳 · Shenzhen</span>
         </div>
-        <div class="meta-cell">
-          <dt>Volume</dt>
-          <dd><span class="meta-num">No. I</span></dd>
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Tracks</span>
+          <span class="hero-meta-value hero-meta-num" id="track-count">—</span>
         </div>
-        <div class="meta-cell">
-          <dt>Tracks</dt>
-          <dd><span class="meta-num" id="track-count">—</span></dd>
-        </div>
-      </dl>
-    </aside>
+      </div>
+    </div>
   </div>
 
-  <div class="hero-divider" aria-hidden="true">
-    <span class="hero-divider-line"></span>
-    <span class="hero-divider-text">曲目 · 樂府 · TRACK LIST</span>
-    <span class="hero-divider-line"></span>
+  <div class="hero-scroll-hint" aria-hidden="true">
+    <span class="hero-scroll-line"></span>
+    <span class="hero-scroll-text">scroll</span>
   </div>
 </header>
 
-<!-- ─────────── tracks ─────────── -->
-<main class="tracks frame" id="song-list" aria-label="曲目列表">
+<!-- 卷轴滚动指示器 -->
+<div class="scroll-indicator" aria-hidden="true">
+  <div class="scroll-indicator-line"></div>
+  <div class="scroll-indicator-progress"></div>
+</div>
+
+<!-- 墨点装饰 -->
+<span class="ink-dot ink-dot-1" aria-hidden="true"></span>
+<span class="ink-dot ink-dot-2" aria-hidden="true"></span>
+<span class="ink-dot ink-dot-3" aria-hidden="true"></span>
+
+<!-- ═══════ 曲目 ═══════ -->
+<main class="tracks" id="song-list" aria-label="曲目列表">
   <div class="loading">
-    <span class="loading-dot"></span>
-    <span class="loading-dot"></span>
-    <span class="loading-dot"></span>
+    <span class="loading-ring"></span>
+    <span class="loading-text">載入中</span>
   </div>
 </main>
 
-<!-- ─────────── about ─────────── -->
-<section class="about frame" aria-label="关于">
-  <div class="about-inner">
-    <div class="about-mark">※ ※ ※</div>
+<!-- ═══════ 跋 ═══════ -->
+<section class="about" aria-label="关于">
+  <div class="about-bg" aria-hidden="true"></div>
+  <div class="about-inner frame">
+    <div class="about-mark">※</div>
     <p class="about-text">
       这里收录了 <em>James</em> 在 AI 时代的私人创作。<br>
       没有发行计划，没有流量期待，<br>
@@ -123,20 +151,22 @@
   </div>
 </section>
 
-<!-- ─────────── footer ─────────── -->
-<footer class="footer frame">
-  <div class="footer-inner">
-    <span>
+<!-- ═══════ 页脚 ═══════ -->
+<footer class="footer">
+  <div class="footer-inner frame">
+    <div class="footer-left">
       <span class="footer-seal">声</span>
-      <span>© 2026 · James Cheng</span>
-    </span>
-    <span>深圳 · 寫於深夜與清晨之間</span>
-    <a class="footer-link" href="https://ainovalife.com" target="_blank" rel="noopener">ainovalife.com →</a>
+      <span class="footer-copy">© 2026 · James</span>
+    </div>
+    <span class="footer-place">深圳 · 寫於深夜與清晨之間</span>
   </div>
 </footer>
 
-<!-- ─────────── sticky mini player ─────────── -->
+<!-- ═══════ 迷你播放器 ═══════ -->
 <div class="mini-player" id="mini-player" hidden>
+  <div class="mini-viz-wrap" aria-hidden="true">
+    <canvas class="mini-viz" id="mini-viz"></canvas>
+  </div>
   <div class="mini-player-inner">
     <div class="mini-info">
       <span class="mini-num" id="mini-num"></span>
@@ -155,40 +185,46 @@
   </div>
 </div>
 
-<!-- ─────────── templates ─────────── -->
+<!-- ═══════ 模板 ═══════ -->
 <template id="song-template">
   <article class="track" data-id="">
-    <div class="track-no">
-      <span class="track-no-kanji"></span>
-      <span class="track-no-line" aria-hidden="true"></span>
-      <span class="track-no-num"></span>
+    <div class="track-visual">
+      <div class="track-no">
+        <span class="track-no-roman"></span>
+        <span class="track-no-kanji"></span>
+      </div>
+      <div class="track-viz-wrap" aria-hidden="true">
+        <img class="track-cover" alt="">
+        <canvas class="track-viz"></canvas>
+      </div>
     </div>
 
     <div class="track-body">
-      <div class="track-titles">
-        <h2 class="track-title"></h2>
-        <span class="track-subtitle"></span>
+      <div class="track-header">
+        <div class="track-titles">
+          <h2 class="track-title"></h2>
+          <span class="track-subtitle"></span>
+        </div>
+        <div class="track-meta">
+          <span class="track-style"></span>
+          <span class="track-dot">·</span>
+          <span class="track-date"></span>
+          <span class="track-dot">·</span>
+          <span class="track-len"></span>
+        </div>
       </div>
 
-      <div class="track-info">
-        <span class="track-style"></span>
-        <span class="track-dot">·</span>
-        <span class="track-date"></span>
-        <span class="track-dot">·</span>
-        <span class="track-len"></span>
-      </div>
+      <p class="track-desc"></p>
 
       <div class="track-tags">
         <span class="track-tag">原創 Original</span>
         <span class="track-tag">詩詞 Lyrics</span>
       </div>
 
-      <p class="track-desc"></p>
-
       <div class="player">
         <button class="player-btn" aria-label="播放/暂停">
-          <svg class="player-icon-play" viewBox="0 0 24 24" width="14" height="14"><polygon points="7,4 19,12 7,20" fill="currentColor"/></svg>
-          <svg class="player-icon-pause" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="4" width="3.5" height="16" rx="0.5"/><rect x="14.5" y="4" width="3.5" height="16" rx="0.5"/></svg>
+          <svg class="player-icon-play" viewBox="0 0 24 24" width="16" height="16"><polygon points="7,4 19,12 7,20" fill="currentColor"/></svg>
+          <svg class="player-icon-pause" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><rect x="6" y="4" width="3.5" height="16" rx="0.5"/><rect x="14.5" y="4" width="3.5" height="16" rx="0.5"/></svg>
         </button>
         <div class="player-bar-wrap">
           <div class="player-bar">
@@ -200,8 +236,9 @@
       </div>
 
       <button class="lyric-toggle" aria-expanded="false">
-        <span class="lyric-toggle-mark"></span>
+        <span class="lyric-toggle-line"></span>
         <span class="lyric-toggle-text">展開詩詞 · View Lyrics</span>
+        <span class="lyric-toggle-line"></span>
       </button>
 
       <div class="lyric" hidden>
@@ -211,7 +248,6 @@
   </article>
 </template>
 
-<!-- ─────────── section header template ─────────── -->
 <template id="section-template">
   <div class="track-section">
     <div class="track-section-header">
