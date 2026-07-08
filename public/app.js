@@ -392,7 +392,7 @@ function renderSongs() {
     const coverImg = el.querySelector('.track-cover');
     const svgFallback = generateSVGCover(song.theme || 'warm', song.title);
     coverImg.onerror = () => { coverImg.src = svgFallback; };
-    coverImg.src = getCoverURL(song.theme || 'warm');
+    coverImg.src = song.coverImage || getCoverURL(song.theme || 'warm');
 
     const playerBtn = el.querySelector('.player-btn');
     playerBtn.addEventListener('click', (ev) => { ev.stopPropagation(); togglePlay(idx); });
