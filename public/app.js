@@ -1,46 +1,38 @@
 /* ============================================================
-   声音志 · Sound Journal
-   Frontend Logic · 原生 ES6+
+   声音志 · Sound Journal — 交互引擎
+   粒子声场 / Web Audio 可视化 / 唱片播放器
    ============================================================ */
 
 const AUDIO_BASE = 'https://audio.ainovalife.com/';
 
-/* ----- helpers ----- */
 const $  = (s, p = document) => p.querySelector(s);
 const $$ = (s, p = document) => [...p.querySelectorAll(s)];
 
-function toKanjiNum(n) {
-  const k = ['〇','一','二','三','四','五','六','七','八','九'];
-  if (n < 11) return k[n];
-  if (n < 20) return n === 10 ? '十' : '十' + k[n - 10];
-  if (n < 100) {
-    const t = Math.floor(n / 10), o = n % 10;
-    return k[t] + '十' + (o ? k[o] : '');
-  }
-  return String(n);
-}
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FINE_POINTER = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-function toRomanNum(n) {
-  if (n < 1) return '—';
-  const map = [['M',1000],['CM',900],['D',500],['CD',400],['C',100],
-               ['XC',90],['L',50],['XL',40],['X',10],['IX',9],
-               ['V',5],['IV',4],['I',1]];
-  let r = '';
-  for (const [l, v] of map) { while (n >= v) { r += l; n -= v; } }
-  return r;
-}
+/* 主题色谱：fire 炽 / warm 暖 */
+const ACCENTS = {
+  fire: { hex: '#ff5a36', rgb: [255, 90, 54] },
+  warm: { hex: '#e6a550', rgb: [230, 165, 80] },
+};
+const DEFAULT_COVERS = {
+  fire: 'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=600&q=80',
+  warm: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=600&q=80',
+};
+const accentOf = song => ACCENTS[song.theme] || ACCENTS.fire;
+const coverOf  = song => song.coverImage || DEFAULT_COVERS[song.theme] || DEFAULT_COVERS.fire;
 
 function fmtTime(s) {
   if (!isFinite(s) || s < 0) return '0:00';
   const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60).toString().padStart(2, '0');
-  return `${m}:${sec}`;
+  return `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 }
 
 function fmtDate(s) {
   const d = new Date(s);
   if (isNaN(d)) return s;
-  return `${d.getFullYear()} · ${String(d.getMonth()+1).padStart(2,'0')} · ${String(d.getDate()).padStart(2,'0')}`;
+  return `${d.getFullYear()} · ${String(d.getMonth() + 1).padStart(2, '0')} · ${String(d.getDate()).padStart(2, '0')}`;
 }
 
 /* ============================================================
@@ -49,757 +41,606 @@ function fmtDate(s) {
 const state = {
   songs: [],
   currentIdx: -1,
-  audio: null,
   isPlaying: false,
+  accent: ACCENTS.fire,
+  audio: new Audio(),
   audioCtx: null,
   analyser: null,
-  source: null,
-  dataArray: null,
-  vizRaf: null,
+  freqData: null,
+  energy: 0,        // 平滑后的低频能量 0..1
 };
+state.audio.crossOrigin = 'anonymous';
+state.audio.preload = 'metadata';
+
+const RING_LEN = 2 * Math.PI * 48.5; // track-progress 圆周
 
 /* ============================================================
-   AMBIENT CANVAS — subtle dust particles
+   氛围背景 — 极光流体
    ============================================================ */
-class AmbientCanvas {
+class Aurora {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.particles = [];
-    this.resize();
-    this.initParticles();
-    this.animate();
-    window.addEventListener('resize', () => { this.resize(); this.initParticles(); });
+    canvas.width = 192;
+    canvas.height = 108;
+    this.t = Math.random() * 100;
+    this.blobs = [
+      { x: 0.25, y: 0.3, r: 0.5, sp: 0.00021, ph: 0.0, mix: 0.9 },
+      { x: 0.75, y: 0.6, r: 0.55, sp: 0.00016, ph: 2.1, mix: 0.55 },
+      { x: 0.5, y: 0.85, r: 0.45, sp: 0.00026, ph: 4.2, mix: 0.4 },
+      { x: 0.6, y: 0.15, r: 0.4, sp: 0.00012, ph: 5.6, mix: 0.3 },
+    ];
   }
-
-  resize() {
-    const dpr = Math.min(window.devicePixelRatio, 2);
-    this.canvas.width = window.innerWidth * dpr;
-    this.canvas.height = window.innerHeight * dpr;
-    this.ctx.scale(dpr, dpr);
-    this.w = window.innerWidth;
-    this.h = window.innerHeight;
-  }
-
-  initParticles() {
-    const count = Math.floor((this.w * this.h) / 25000);
-    this.particles = [];
-    const isDark = document.documentElement.dataset.theme === 'dark';
-    for (let i = 0; i < count; i++) {
-      this.particles.push({
-        x: Math.random() * this.w,
-        y: Math.random() * this.h,
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: (Math.random() - 0.5) * 0.15 - 0.05,
-        r: Math.random() * 1.5 + 0.5,
-        opacity: Math.random() * 0.15 + 0.05,
-        color: isDark ? '232,227,211' : '26,22,18',
-      });
+  draw(dt) {
+    this.t += dt;
+    const { ctx, canvas } = this;
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    const [ar, ag, ab] = state.accent.rgb;
+    for (const b of this.blobs) {
+      const x = (b.x + Math.sin(this.t * b.sp + b.ph) * 0.18) * w;
+      const y = (b.y + Math.cos(this.t * b.sp * 1.3 + b.ph) * 0.15) * h;
+      const r = b.r * w * (1 + Math.sin(this.t * b.sp * 2 + b.ph) * 0.12);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      const cr = Math.round(ar * b.mix + 20 * (1 - b.mix));
+      const cg = Math.round(ag * b.mix + 24 * (1 - b.mix));
+      const cb = Math.round(ab * b.mix + 58 * (1 - b.mix));
+      g.addColorStop(0, `rgba(${cr},${cg},${cb},0.55)`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
     }
-  }
-
-  animate() {
-    this.ctx.clearRect(0, 0, this.w, this.h);
-    const isDark = document.documentElement.dataset.theme === 'dark';
-    const targetColor = isDark ? '232,227,211' : '26,22,18';
-
-    for (const p of this.particles) {
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.x < -10) p.x = this.w + 10;
-      if (p.x > this.w + 10) p.x = -10;
-      if (p.y < -10) p.y = this.h + 10;
-      if (p.y > this.h + 10) p.y = -10;
-      p.color = targetColor;
-
-      this.ctx.beginPath();
-      this.ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      this.ctx.fillStyle = `rgba(${p.color},${p.opacity})`;
-      this.ctx.fill();
-    }
-
-    // connect nearby particles
-    for (let i = 0; i < this.particles.length; i++) {
-      for (let j = i + 1; j < this.particles.length; j++) {
-        const dx = this.particles[i].x - this.particles[j].x;
-        const dy = this.particles[i].y - this.particles[j].y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 120) {
-          this.ctx.beginPath();
-          this.ctx.moveTo(this.particles[i].x, this.particles[i].y);
-          this.ctx.lineTo(this.particles[j].x, this.particles[j].y);
-          this.ctx.strokeStyle = `rgba(${this.particles[i].color},${0.03 * (1 - dist / 120)})`;
-          this.ctx.lineWidth = 0.5;
-          this.ctx.stroke();
-        }
-      }
-    }
-
-    requestAnimationFrame(() => this.animate());
   }
 }
 
 /* ============================================================
-   AUDIO VISUALIZER
+   Hero — 3D 粒子声场球
    ============================================================ */
-function initAudioContext() {
-  if (state.audioCtx) return;
-  state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  state.analyser = state.audioCtx.createAnalyser();
-  state.analyser.fftSize = 256;
-  state.analyser.smoothingTimeConstant = 0.85;
-  state.dataArray = new Uint8Array(state.analyser.frequencyBinCount);
-}
-
-function connectAudioSource() {
-  if (!state.audioCtx || !state.audio || state.source) return;
-  try {
-    state.source = state.audioCtx.createMediaElementSource(state.audio);
-    state.source.connect(state.analyser);
-    state.analyser.connect(state.audioCtx.destination);
-  } catch (e) {
-    // already connected or cross-origin issue
-    console.warn('Audio viz connection failed:', e);
-  }
-}
-
-function drawVisualizer(canvas, type = 'spectrum', intensity = 1) {
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const dpr = Math.min(window.devicePixelRatio, 2);
-  const rect = canvas.getBoundingClientRect();
-  if (rect.width === 0 || rect.height === 0) return;
-
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  ctx.scale(dpr, dpr);
-
-  const w = rect.width;
-  const h = rect.height;
-  const isDark = document.documentElement.dataset.theme === 'dark';
-  const shu = isDark ? '#c25141' : '#a8341c';
-  const sumi = isDark ? 'rgba(232,227,211,' : 'rgba(26,22,18,';
-
-  let data = null;
-  if (state.analyser && state.isPlaying) {
-    state.analyser.getByteFrequencyData(state.dataArray);
-    data = state.dataArray;
-  }
-
-  ctx.clearRect(0, 0, w, h);
-
-  if (type === 'spectrum') {
-    const barCount = Math.min(64, data ? data.length : 32);
-    const gap = 2;
-    const barW = (w - gap * (barCount - 1)) / barCount;
-
-    for (let i = 0; i < barCount; i++) {
-      let value = 0;
-      if (data) {
-        const idx = Math.floor(i * data.length / barCount);
-        value = data[idx] / 255;
-      } else if (state.isPlaying) {
-        // fallback simulated waveform
-        const t = Date.now() / 1000;
-        value = (Math.sin(t * 3 + i * 0.5) * 0.3 + 0.3) * intensity;
-      }
-      const barH = value * h * 0.85;
-      const x = i * (barW + gap);
-      const y = h - barH;
-
-      const grad = ctx.createLinearGradient(0, h, 0, y);
-      grad.addColorStop(0, shu);
-      grad.addColorStop(1, sumi + '0.3)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(x, y, barW, barH);
+class Sphere {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.rotY = 0;
+    this.rotX = 0.35;
+    this.mouseRX = 0;
+    this.mouseRY = 0;
+    this.targetMRX = 0;
+    this.targetMRY = 0;
+    this.pulse = 0;
+    this.points = [];
+    const N = 750;
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < N; i++) {
+      const y = 1 - (i / (N - 1)) * 2;
+      const rad = Math.sqrt(1 - y * y);
+      const th = golden * i;
+      this.points.push({
+        x: Math.cos(th) * rad, y, z: Math.sin(th) * rad,
+        mix: Math.random(),           // 白 ↔ 强调色 混合比
+        tw: Math.random() * Math.PI * 2, // 闪烁相位
+      });
     }
-  } else if (type === 'wave') {
-    ctx.beginPath();
-    const points = 120;
-    for (let i = 0; i <= points; i++) {
-      const x = (i / points) * w;
-      let y = h / 2;
-      if (data && state.isPlaying) {
-        const idx = Math.floor(i * data.length / points);
-        y += (data[idx] / 255 - 0.5) * h * 0.8 * intensity;
-      } else if (state.isPlaying) {
-        const t = Date.now() / 1000;
-        y += Math.sin(t * 2 + i * 0.3) * h * 0.15 * intensity;
-      }
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+    this.resize();
+    if (FINE_POINTER) {
+      window.addEventListener('pointermove', e => {
+        this.targetMRY = (e.clientX / window.innerWidth - 0.5) * 0.6;
+        this.targetMRX = (e.clientY / window.innerHeight - 0.5) * 0.4;
+      });
     }
-    ctx.strokeStyle = shu;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+  }
+  resize() {
+    const rect = this.canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.canvas.width = Math.max(1, rect.width * dpr);
+    this.canvas.height = Math.max(1, rect.height * dpr);
+    this.dpr = dpr;
+    this.w = rect.width;
+    this.h = rect.height;
+  }
+  draw(dt) {
+    const { ctx } = this;
+    const e = state.energy;
+    this.pulse += (e - this.pulse) * 0.08;
+    this.rotY += dt * 0.00016 * (1 + this.pulse * 1.6);
+    this.mouseRX += (this.targetMRX - this.mouseRX) * 0.04;
+    this.mouseRY += (this.targetMRY - this.mouseRY) * 0.04;
 
-    // glow
-    ctx.save();
-    ctx.globalAlpha = 0.15;
-    ctx.lineWidth = 8;
-    ctx.stroke();
-    ctx.restore();
-  } else if (type === 'mini') {
-    // subtle waveform for mini player
-    const points = 60;
-    for (let line = 0; line < 3; line++) {
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.clearRect(0, 0, this.w, this.h);
+
+    const cx = this.w / 2, cy = this.h / 2;
+    const R = Math.min(this.w, this.h) * 0.34 * (1 + this.pulse * 0.22);
+    const fov = 3.2;
+    const cosY = Math.cos(this.rotY + this.mouseRY), sinY = Math.sin(this.rotY + this.mouseRY);
+    const cosX = Math.cos(this.rotX + this.mouseRX), sinX = Math.sin(this.rotX + this.mouseRX);
+    const [ar, ag, ab] = state.accent.rgb;
+    const now = performance.now() * 0.001;
+
+    // 核心辉光
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.4);
+    glow.addColorStop(0, `rgba(${ar},${ag},${ab},${0.10 + this.pulse * 0.22})`);
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, this.w, this.h);
+
+    // 粒子
+    for (const p of this.points) {
+      const x1 = p.x * cosY + p.z * sinY;
+      const z1 = -p.x * sinY + p.z * cosY;
+      const y2 = p.y * cosX - z1 * sinX;
+      const z2 = p.y * sinX + z1 * cosX;
+      const s = fov / (fov + z2);
+      const px = cx + x1 * R * s;
+      const py = cy + y2 * R * s;
+      const depth = (s - 0.75) / 0.55; // 0..1
+      if (depth <= 0) continue;
+      const twinkle = 0.65 + 0.35 * Math.sin(now * 1.6 + p.tw);
+      const alpha = Math.min(1, depth * 0.85 * twinkle + this.pulse * 0.25);
+      const size = Math.max(0.4, depth * 1.9 * (1 + this.pulse * 0.9));
+      const rr = Math.round(236 + (ar - 236) * p.mix);
+      const gg = Math.round(231 + (ag - 231) * p.mix);
+      const bb = Math.round(221 + (ab - 221) * p.mix);
+      ctx.fillStyle = `rgba(${rr},${gg},${bb},${alpha})`;
       ctx.beginPath();
-      for (let i = 0; i <= points; i++) {
-        const x = (i / points) * w;
-        let y = h / 2;
-        if (data && state.isPlaying) {
-          const idx = Math.floor(i * data.length / points);
-          const v = (data[idx] / 255) * (1 - line * 0.25);
-          y += (v - 0.3) * h * 0.6;
-        } else if (state.isPlaying) {
-          const t = Date.now() / 1000 + line;
-          y += Math.sin(t * 2.5 + i * 0.4) * h * 0.2 * (1 - line * 0.2);
-        }
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+      ctx.arc(px, py, size, 0, 6.2832);
+      ctx.fill();
+    }
+
+    // 环绕声谱环
+    const ringR = R * 1.28;
+    const bars = 96;
+    ctx.lineWidth = 1.4;
+    for (let i = 0; i < bars; i++) {
+      const a = (i / bars) * Math.PI * 2 + this.rotY * 0.5;
+      let v;
+      if (state.analyser && state.freqData) {
+        v = state.freqData[Math.floor((i / bars) * state.freqData.length * 0.7)] / 255;
+      } else {
+        v = 0.08 + 0.05 * Math.sin(now * 1.2 + i * 0.5);
       }
-      ctx.strokeStyle = line === 0 ? shu : sumi + (0.1 - line * 0.03) + ')';
-      ctx.lineWidth = 1;
+      const len = 4 + v * R * 0.22;
+      const x1 = cx + Math.cos(a) * ringR, y1 = cy + Math.sin(a) * ringR;
+      const x2 = cx + Math.cos(a) * (ringR + len), y2 = cy + Math.sin(a) * (ringR + len);
+      ctx.strokeStyle = `rgba(${ar},${ag},${ab},${0.15 + v * 0.75})`;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
       ctx.stroke();
     }
   }
 }
 
 /* ============================================================
-   COVER GENERATOR
+   唱片环形频谱
    ============================================================ */
-
-/* Unsplash 氛围图映射 */
-const UNSPLASH_COVERS = {
-  warm: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=600&q=80',
-  fire: 'https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?w=600&q=80',
-};
-
-/* SVG fallback — 程序生成抽象封面 */
-function generateSVGCover(theme, title) {
-  const seed = title.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const rng = (n = 1) => {
-    const x = Math.sin(seed + n) * 10000;
-    return x - Math.floor(x);
-  };
-
-  let svg = '';
-  if (theme === 'warm') {
-    const circles = [];
-    for (let i = 0; i < 5; i++) {
-      const r = 60 + i * 35 + rng(i) * 20;
-      const opacity = 0.06 + rng(i + 10) * 0.08;
-      circles.push(`<circle cx="200" cy="200" r="${r}" fill="none" stroke="#a8341c" stroke-width="1" opacity="${opacity}"/>`);
-    }
-    const waves = [];
-    for (let i = 0; i < 6; i++) {
-      let d = '';
-      const yBase = 120 + i * 32;
-      const amp = 15 + rng(i + 20) * 20;
-      const freq = 0.012 + rng(i + 30) * 0.008;
-      for (let x = 0; x <= 400; x += 4) {
-        const y = yBase + Math.sin(x * freq + i * 0.9) * amp + Math.cos(x * freq * 1.7) * (amp * 0.4);
-        d += (x === 0 ? 'M' : 'L') + `${x},${y.toFixed(1)}`;
-      }
-      waves.push(`<path d="${d}" fill="none" stroke="#1a1612" stroke-width="1" opacity="${0.04 + i * 0.015}"/>`);
-    }
-    svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
-      <defs><radialGradient id="g" cx="50%" cy="50%" r="70%"><stop offset="0%" stop-color="#ede4d4"/><stop offset="50%" stop-color="#e0d4c0"/><stop offset="100%" stop-color="#d4c4b0"/></radialGradient></defs>
-      <rect width="400" height="400" fill="url(#g)"/>${circles.join('')}${waves.join('')}<circle cx="200" cy="200" r="4" fill="#a8341c" opacity="0.3"/></svg>`;
-  } else if (theme === 'fire') {
-    const rays = [];
-    for (let i = 0; i < 24; i++) {
-      const angle = (i / 24) * Math.PI * 2 + rng(i) * 0.3;
-      const len = 140 + rng(i + 10) * 80;
-      const x1 = 200 + Math.cos(angle) * 40;
-      const y1 = 200 + Math.sin(angle) * 40;
-      const x2 = 200 + Math.cos(angle) * len;
-      const y2 = 200 + Math.sin(angle) * len;
-      const opacity = 0.08 + rng(i + 20) * 0.18;
-      rays.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#c25141" stroke-width="1.5" opacity="${opacity}"/>`);
-    }
-    const rings = [];
-    for (let i = 0; i < 3; i++) {
-      const r = 50 + i * 30;
-      rings.push(`<circle cx="200" cy="200" r="${r}" fill="none" stroke="#e8e3d3" stroke-width="0.5" opacity="0.1"/>`);
-    }
-    svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
-      <defs><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2a2018"/><stop offset="50%" stop-color="#1a1410"/><stop offset="100%" stop-color="#3a2820"/></linearGradient></defs>
-      <rect width="400" height="400" fill="url(#g2)"/>${rings.join('')}${rays.join('')}<circle cx="200" cy="200" r="20" fill="#c25141" opacity="0.25"/><circle cx="200" cy="200" r="8" fill="#a8341c" opacity="0.5"/></svg>`;
-  } else {
-    svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="#e8e0d0"/><circle cx="200" cy="200" r="100" fill="none" stroke="#1a1612" stroke-width="0.5" opacity="0.1"/><circle cx="200" cy="200" r="60" fill="none" stroke="#a8341c" stroke-width="0.5" opacity="0.15"/><circle cx="200" cy="200" r="4" fill="#a8341c" opacity="0.3"/></svg>`;
+class DiscViz {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
   }
-
-  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
-}
-
-function getCoverURL(theme) {
-  return UNSPLASH_COVERS[theme] || UNSPLASH_COVERS.warm;
-}
-
-/* ============================================================
-   LOAD & RENDER
-   ============================================================ */
-async function loadSongs() {
-  try {
-    const res = await fetch('songs.json', { cache: 'no-cache' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    state.songs = await res.json();
-    renderSongs();
-  } catch (e) {
-    console.error('Failed to load songs:', e);
-    $('#song-list').innerHTML =
-      '<div class="error">曲目載入失敗 · Tracks unavailable</div>';
+  resize() {
+    const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = rect.height * dpr;
+    this.dpr = dpr;
+    this.w = rect.width;
+    this.h = rect.height;
   }
-}
-
-function renderSongs() {
-  const list = $('#song-list');
-  list.innerHTML = '';
-
-  const roman = toRomanNum(state.songs.length);
-  $('#track-count').textContent = roman;
-
-  state.songs.forEach((song, idx) => {
-    if (idx === 0) {
-      const sec = $('#section-template').content.cloneNode(true);
-      sec.querySelector('.track-section-num').textContent = toRomanNum(1);
-      sec.querySelector('.track-section-title').textContent = '最新曲目 · LATEST RELEASES';
-      sec.querySelector('.track-section-romaji').textContent = 'The most recent recordings';
-      list.appendChild(sec);
-    }
-
-    const tpl = $('#song-template').content.cloneNode(true);
-    const el = tpl.querySelector('.track');
-    el.dataset.id = song.id;
-    el.dataset.idx = idx;
-
-    el.querySelector('.track-no-roman').textContent = `№ ${toRomanNum(idx + 1)}`;
-    el.querySelector('.track-no-kanji').textContent = `第${toKanjiNum(idx + 1)}曲`;
-    el.querySelector('.track-title').textContent = song.title;
-    el.querySelector('.track-subtitle').textContent = song.subtitle || '';
-    el.querySelector('.track-style').textContent = song.style;
-    el.querySelector('.track-date').textContent = fmtDate(song.date);
-    el.querySelector('.track-len').textContent = song.duration;
-    el.querySelector('.track-desc').textContent = song.description || '';
-
-    if (song.lyrics) {
-      const lyricInner = el.querySelector('.lyric-inner');
-      lyricInner.textContent = song.lyrics.trim();
-    }
-
-    /* generate cover — Unsplash first, SVG fallback */
-    const coverImg = el.querySelector('.track-cover');
-    const svgFallback = generateSVGCover(song.theme || 'warm', song.title);
-    coverImg.onerror = () => { coverImg.src = svgFallback; };
-    coverImg.src = song.coverImage || getCoverURL(song.theme || 'warm');
-
-    const playerBtn = el.querySelector('.player-btn');
-    playerBtn.addEventListener('click', (ev) => { ev.stopPropagation(); togglePlay(idx); });
-
-    const barWrap = el.querySelector('.player-bar-wrap');
-    barWrap.addEventListener('click', (ev) => seek(ev, idx));
-
-    const lyricToggle = el.querySelector('.lyric-toggle');
-    const lyric = el.querySelector('.lyric');
-    lyricToggle.addEventListener('click', () => {
-      const open = lyric.hasAttribute('hidden');
-      if (open) {
-        lyric.removeAttribute('hidden');
-        lyricToggle.setAttribute('aria-expanded', 'true');
-        lyricToggle.querySelector('.lyric-toggle-text').textContent = '收起詩詞 · Hide Lyrics';
+  draw(active) {
+    const { ctx } = this;
+    if (!this.w) this.resize();
+    if (!this.w) return;
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.clearRect(0, 0, this.w, this.h);
+    const cx = this.w / 2, cy = this.h / 2;
+    const base = Math.min(this.w, this.h) * 0.415;
+    const [ar, ag, ab] = state.accent.rgb;
+    const bars = 72;
+    const now = performance.now() * 0.001;
+    for (let i = 0; i < bars; i++) {
+      const a = (i / bars) * Math.PI * 2 - Math.PI / 2;
+      let v;
+      if (active && state.analyser && state.freqData && state.isPlaying) {
+        v = state.freqData[Math.floor((i / bars) * state.freqData.length * 0.72)] / 255;
       } else {
-        lyric.setAttribute('hidden', '');
-        lyricToggle.setAttribute('aria-expanded', 'false');
-        lyricToggle.querySelector('.lyric-toggle-text').textContent = '展開詩詞 · View Lyrics';
+        v = 0.05 + 0.03 * Math.sin(now + i * 0.6);
       }
-    });
-
-    list.appendChild(el);
-  });
-
-  $('#mini-btn').addEventListener('click', () => {
-    if (state.currentIdx >= 0) togglePlay(state.currentIdx);
-  });
-  $('#mini-player .mini-bar-wrap').addEventListener('click', (ev) => {
-    if (state.currentIdx >= 0) seek(ev, state.currentIdx);
-  });
-
-  // scroll animation observer
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.classList.add('in');
-        observer.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.06, rootMargin: '0px 0px -60px 0px' });
-
-  $$('.track').forEach(t => observer.observe(t));
-
-  // about section observer
-  const aboutObserver = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.classList.add('in');
-        aboutObserver.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.2 });
-  const about = $('.about');
-  if (about) aboutObserver.observe(about);
+      const len = 3 + v * base * 0.42;
+      ctx.strokeStyle = `rgba(${ar},${ag},${ab},${0.12 + v * 0.85})`;
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * base, cy + Math.sin(a) * base);
+      ctx.lineTo(cx + Math.cos(a) * (base + len), cy + Math.sin(a) * (base + len));
+      ctx.stroke();
+    }
+  }
+  clear() {
+    if (!this.w) return;
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    this.ctx.clearRect(0, 0, this.w, this.h);
+  }
 }
 
 /* ============================================================
-   PLAYER
+   自定义光标
    ============================================================ */
-function togglePlay(idx) {
+function initCursor() {
+  if (!FINE_POINTER || REDUCED) return;
+  const wrap = $('#cursor');
+  const dot = $('.cursor-dot', wrap);
+  const ring = $('.cursor-ring', wrap);
+  let x = -100, y = -100, rx = -100, ry = -100;
+  window.addEventListener('pointermove', e => {
+    x = e.clientX; y = e.clientY;
+    dot.style.transform = `translate(${x}px,${y}px) translate(-50%,-50%)`;
+  });
+  (function follow() {
+    rx += (x - rx) * 0.16;
+    ry += (y - ry) * 0.16;
+    ring.style.transform = `translate(${rx}px,${ry}px) translate(-50%,-50%)`;
+    requestAnimationFrame(follow);
+  })();
+  document.addEventListener('mouseover', e => {
+    if (e.target.closest('[data-cursor], a, button')) wrap.classList.add('is-hover');
+  });
+  document.addEventListener('mouseout', e => {
+    if (e.target.closest('[data-cursor], a, button')) wrap.classList.remove('is-hover');
+  });
+  window.addEventListener('pointerdown', () => wrap.classList.add('is-down'));
+  window.addEventListener('pointerup', () => wrap.classList.remove('is-down'));
+}
+
+/* ============================================================
+   磁吸按钮
+   ============================================================ */
+function initMagnetic() {
+  if (!FINE_POINTER || REDUCED) return;
+  $$('.magnetic').forEach(el => {
+    el.addEventListener('pointermove', e => {
+      const r = el.getBoundingClientRect();
+      const dx = e.clientX - (r.left + r.width / 2);
+      const dy = e.clientY - (r.top + r.height / 2);
+      el.style.transform = `translate(${dx * 0.18}px, ${dy * 0.28}px)`;
+    });
+    el.addEventListener('pointerleave', () => { el.style.transform = ''; });
+  });
+}
+
+/* ============================================================
+   音频引擎
+   ============================================================ */
+function ensureAudioGraph() {
+  if (state.audioCtx) return;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    state.audioCtx = new Ctx();
+    const src = state.audioCtx.createMediaElementSource(state.audio);
+    state.analyser = state.audioCtx.createAnalyser();
+    state.analyser.fftSize = 512;
+    state.analyser.smoothingTimeConstant = 0.82;
+    src.connect(state.analyser);
+    state.analyser.connect(state.audioCtx.destination);
+    state.freqData = new Uint8Array(state.analyser.frequencyBinCount);
+  } catch (_) {
+    state.analyser = null;
+    state.freqData = null;
+  }
+}
+
+function updateAccent(song) {
+  state.accent = accentOf(song);
+  const root = document.documentElement.style;
+  root.setProperty('--accent', state.accent.hex);
+  const [r, g, b] = state.accent.rgb;
+  root.setProperty('--accent-soft', `rgba(${r},${g},${b},0.16)`);
+}
+
+const trackRefs = []; // { el, viz, progressFg, song }
+
+function setTrackUI(idx, playing) {
+  trackRefs.forEach((ref, i) => {
+    ref.el.classList.toggle('is-active', i === idx);
+    ref.el.classList.toggle('is-playing', i === idx && playing);
+  });
+  const bar = $('#player-bar');
+  bar.classList.toggle('is-playing', playing);
+  if (idx < 0) return;
+  const song = state.songs[idx];
+  $('#pb-title').textContent = song.title;
+  $('#pb-sub').textContent = `${song.style} · ${song.subtitle || ''}`;
+  $('#pb-cover').src = coverOf(song);
+}
+
+function playTrack(idx) {
   const song = state.songs[idx];
   if (!song) return;
+  ensureAudioGraph();
+  if (state.audioCtx && state.audioCtx.state === 'suspended') state.audioCtx.resume();
 
-  // resume audio context if suspended
-  if (state.audioCtx && state.audioCtx.state === 'suspended') {
-    state.audioCtx.resume();
+  if (state.currentIdx !== idx) {
+    state.currentIdx = idx;
+    state.audio.src = AUDIO_BASE + song.file;
+    updateAccent(song);
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: song.title,
+        artist: song.artist || 'James',
+        album: '声音志',
+        artwork: [{ src: coverOf(song), sizes: '600x600', type: 'image/jpeg' }],
+      });
+    }
   }
+  state.audio.play().then(() => {
+    state.isPlaying = true;
+    setTrackUI(idx, true);
+    showPlayerBar();
+  }).catch(() => {});
+}
 
-  if (state.audio && state.currentIdx === idx) {
-    if (state.audio.paused) {
-      state.audio.play().catch(e => console.error(e));
-      state.isPlaying = true;
-      startVizLoop();
+function pauseTrack() {
+  state.audio.pause();
+  state.isPlaying = false;
+  setTrackUI(state.currentIdx, false);
+}
+
+function toggleTrack(idx) {
+  if (state.currentIdx === idx && state.isPlaying) pauseTrack();
+  else playTrack(idx);
+}
+
+function showPlayerBar() {
+  const bar = $('#player-bar');
+  if (bar.hidden) {
+    bar.hidden = false;
+    requestAnimationFrame(() => bar.classList.add('show'));
+    document.body.classList.add('has-player');
+  } else {
+    bar.classList.add('show');
+  }
+}
+
+function initAudioEvents() {
+  const a = state.audio;
+  a.addEventListener('play', () => { state.isPlaying = true; setTrackUI(state.currentIdx, true); });
+  a.addEventListener('pause', () => { state.isPlaying = false; setTrackUI(state.currentIdx, false); });
+  a.addEventListener('ended', () => playTrack((state.currentIdx + 1) % state.songs.length));
+  a.addEventListener('timeupdate', () => {
+    const pct = a.duration ? a.currentTime / a.duration : 0;
+    $('#pb-seek-pos').style.width = `${pct * 100}%`;
+    $('#pb-time').textContent = `${fmtTime(a.currentTime)} / ${fmtTime(a.duration)}`;
+    const ref = trackRefs[state.currentIdx];
+    if (ref) ref.progressFg.style.strokeDashoffset = String(RING_LEN * (1 - pct));
+  });
+
+  $('#pb-toggle').addEventListener('click', () => {
+    if (state.currentIdx < 0) playTrack(0);
+    else if (state.isPlaying) pauseTrack();
+    else playTrack(state.currentIdx);
+  });
+  $('#pb-prev').addEventListener('click', () => {
+    if (!state.songs.length) return;
+    playTrack((state.currentIdx - 1 + state.songs.length) % state.songs.length);
+  });
+  $('#pb-next').addEventListener('click', () => {
+    if (!state.songs.length) return;
+    playTrack((state.currentIdx + 1) % state.songs.length);
+  });
+  $('#pb-seek').addEventListener('click', e => {
+    const a = state.audio;
+    if (!a.duration) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    a.currentTime = ((e.clientX - r.left) / r.width) * a.duration;
+  });
+
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.setActionHandler('previoustrack', () => $('#pb-prev').click());
+    navigator.mediaSession.setActionHandler('nexttrack', () => $('#pb-next').click());
+  }
+}
+
+/* ============================================================
+   渲染曲目
+   ============================================================ */
+function renderTracks(songs) {
+  const list = $('#song-list');
+  list.innerHTML = '';
+  const tpl = $('#song-template');
+
+  songs.forEach((song, i) => {
+    const node = tpl.content.cloneNode(true);
+    const el = $('.track', node);
+    el.dataset.id = song.id;
+
+    $('.track-ghost', node).textContent = song.title.charAt(0);
+    $('.track-no', node).textContent = String(i + 1).padStart(2, '0');
+    $('.track-style', node).textContent = song.style || '';
+    $('.track-date', node).textContent = fmtDate(song.date);
+    $('.track-len', node).textContent = song.duration || '';
+    $('.track-title', node).textContent = song.title;
+    $('.track-subtitle', node).textContent = song.subtitle || '';
+    $('.track-desc', node).textContent = song.description || '';
+
+    const cover = $('.track-cover', node);
+    cover.src = coverOf(song);
+    cover.alt = song.title;
+    cover.loading = 'lazy';
+
+    $('.track-play', node).addEventListener('click', () => toggleTrack(i));
+
+    const lyricBtn = $('.lyric-toggle', node);
+    const lyricBox = $('.lyric', node);
+    if (song.lyrics) {
+      $('.lyric-inner', node).textContent = song.lyrics;
+      lyricBtn.addEventListener('click', () => {
+        const open = lyricBox.hidden;
+        lyricBox.hidden = !open;
+        lyricBtn.setAttribute('aria-expanded', String(open));
+        $('.lyric-toggle-text', node).textContent = open ? '收起歌詞' : '展開歌詞';
+      });
     } else {
-      state.audio.pause();
-      state.isPlaying = false;
-      stopVizLoop();
+      lyricBtn.style.display = 'none';
     }
-    updatePlayUI();
-    return;
-  }
 
-  if (state.audio) {
-    state.audio.pause();
-    state.audio.removeEventListener('timeupdate', onTimeUpdate);
-    state.audio.removeEventListener('ended', onEnded);
-    state.audio.removeEventListener('loadedmetadata', onLoaded);
-    state.audio.removeEventListener('error', onAudioError);
-    if (state.source) {
-      try { state.source.disconnect(); } catch(e) {}
-      state.source = null;
-    }
-  }
+    list.appendChild(node);
 
-  state.currentIdx = idx;
-  state.audio = new Audio(AUDIO_BASE + song.file);
-  state.audio.preload = 'metadata';
-  state.audio.crossOrigin = 'anonymous';
-  state.audio.addEventListener('timeupdate', onTimeUpdate);
-  state.audio.addEventListener('ended', onEnded);
-  state.audio.addEventListener('loadedmetadata', onLoaded);
-  state.audio.addEventListener('error', onAudioError);
-
-  state.audio.play().catch(e => {
-    console.error('Play failed:', e);
-    state.isPlaying = false;
-    updatePlayUI();
-  });
-  state.isPlaying = true;
-
-  // init audio context on first play
-  initAudioContext();
-  // connect after a short delay to ensure audio is ready
-  setTimeout(connectAudioSource, 50);
-
-  highlightCurrent();
-  showMiniPlayer(song);
-  updatePlayUI();
-  startVizLoop();
-}
-
-function onLoaded() {
-  if (!state.audio) return;
-  const el = $(`[data-idx="${state.currentIdx}"]`);
-  if (el) {
-    el.querySelector('.player-time').textContent =
-      `${fmtTime(0)} / ${fmtTime(state.audio.duration)}`;
-  }
-  $('#mini-time').textContent = `0:00 / ${fmtTime(state.audio.duration)}`;
-}
-
-function onTimeUpdate() {
-  if (!state.audio || !isFinite(state.audio.duration) || state.audio.duration === 0) return;
-  const pct = (state.audio.currentTime / state.audio.duration) * 100;
-  const el = $(`[data-idx="${state.currentIdx}"]`);
-  if (el) {
-    el.querySelector('.player-bar-pos').style.width = pct + '%';
-    el.querySelector('.player-bar-thumb').style.left = pct + '%';
-    el.querySelector('.player-time').textContent =
-      `${fmtTime(state.audio.currentTime)} / ${fmtTime(state.audio.duration)}`;
-  }
-  $('#mini-bar-pos').style.width = pct + '%';
-  $('#mini-time').textContent =
-    `${fmtTime(state.audio.currentTime)} / ${fmtTime(state.audio.duration)}`;
-}
-
-function onEnded() {
-  state.isPlaying = false;
-  updatePlayUI();
-  stopVizLoop();
-  if (state.currentIdx < state.songs.length - 1) {
-    setTimeout(() => togglePlay(state.currentIdx + 1), 400);
-  }
-}
-
-function onAudioError(e) {
-  console.error('Audio error:', e);
-  state.isPlaying = false;
-  updatePlayUI();
-  stopVizLoop();
-}
-
-function seek(ev, idx) {
-  if (!state.audio || idx !== state.currentIdx) return;
-  if (!isFinite(state.audio.duration)) return;
-  const rect = ev.currentTarget.getBoundingClientRect();
-  const x = ev.clientX - rect.left;
-  const pct = Math.max(0, Math.min(1, x / rect.width));
-  state.audio.currentTime = pct * state.audio.duration;
-}
-
-function updatePlayUI() {
-  $$('.track').forEach(t => t.classList.remove('playing'));
-  if (state.currentIdx >= 0) {
-    const el = $(`[data-idx="${state.currentIdx}"]`);
-    if (el) {
-      el.classList.add('playing');
-      el.querySelector('.player-btn').classList.toggle('on', state.isPlaying);
-    }
-  }
-  $('#mini-btn').classList.toggle('on', state.isPlaying);
-}
-
-function highlightCurrent() {
-  $$('.track').forEach(t => t.classList.remove('playing'));
-  if (state.currentIdx >= 0) {
-    const el = $(`[data-idx="${state.currentIdx}"]`);
-    if (el) el.classList.add('playing');
-  }
-}
-
-function showMiniPlayer(song) {
-  const mp = $('#mini-player');
-  mp.removeAttribute('hidden');
-  requestAnimationFrame(() => { mp.dataset.show = 'true'; });
-  $('#mini-num').textContent = `第${toKanjiNum(state.currentIdx + 1)}曲`;
-  $('#mini-title').textContent = song.title;
-}
-
-/* ============================================================
-   VISUALIZER LOOP
-   ============================================================ */
-const vizCanvases = new Map();
-
-function registerViz(canvas, type, intensity = 1) {
-  vizCanvases.set(canvas, { type, intensity });
-}
-
-function startVizLoop() {
-  if (state.vizRaf) return;
-  function loop() {
-    if (!state.isPlaying) return;
-    vizCanvases.forEach((config, canvas) => {
-      drawVisualizer(canvas, config.type, config.intensity);
+    trackRefs.push({
+      el,
+      song,
+      viz: new DiscViz($('.track-viz', el)),
+      progressFg: $('.track-progress-fg', el),
     });
-    state.vizRaf = requestAnimationFrame(loop);
-  }
-  loop();
-}
-
-function stopVizLoop() {
-  if (state.vizRaf) {
-    cancelAnimationFrame(state.vizRaf);
-    state.vizRaf = null;
-  }
-  // clear all canvases
-  vizCanvases.forEach((config, canvas) => {
-    const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
   });
+
+  // 入场 reveal
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        en.target.classList.add('in');
+        io.unobserve(en.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  trackRefs.forEach(ref => io.observe(ref.el));
 }
 
 /* ============================================================
-   HERO VIZ — subtle ambient wave
+   主循环
    ============================================================ */
-function initHeroViz() {
-  const canvas = $('#hero-viz');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const dpr = Math.min(window.devicePixelRatio, 2);
+let sphere = null;
+let aurora = null;
+let pbVizCtx = null;
+let lastTs = 0;
 
-  function resize() {
-    const parent = canvas.parentElement;
-    const w = parent.offsetWidth;
-    const h = parent.offsetHeight;
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    ctx.scale(dpr, dpr);
-    canvas._w = w;
-    canvas._h = h;
+function loop(ts) {
+  const dt = Math.min(50, ts - lastTs || 16);
+  lastTs = ts;
+
+  if (state.analyser && state.freqData) {
+    state.analyser.getByteFrequencyData(state.freqData);
+    let bass = 0;
+    const n = Math.min(16, state.freqData.length);
+    for (let i = 2; i < n; i++) bass += state.freqData[i];
+    const target = state.isPlaying ? bass / (n - 2) / 255 : 0;
+    state.energy += (target - state.energy) * 0.12;
+  } else {
+    state.energy *= 0.95;
   }
-  resize();
-  window.addEventListener('resize', resize);
 
-  function draw() {
-    const w = canvas._w;
-    const h = canvas._h;
-    if (!w || !h) { requestAnimationFrame(draw); return; }
+  if (aurora) aurora.draw(dt);
+  if (sphere) sphere.draw(dt);
 
+  const ref = trackRefs[state.currentIdx];
+  if (ref) ref.viz.draw(true);
+
+  // 播放条底部频谱
+  if (pbVizCtx && !$('#player-bar').hidden) {
+    const { ctx, w, h, dpr } = pbVizCtx;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    const isDark = document.documentElement.dataset.theme === 'dark';
-    const color = isDark ? '194,81,65' : '168,52,28';
-
-    const t = Date.now() / 1000;
-    for (let line = 0; line < 5; line++) {
-      ctx.beginPath();
-      for (let x = 0; x <= w; x += 2) {
-        const freq = 0.003 + line * 0.001;
-        const amp = 20 + line * 8;
-        const speed = 0.3 + line * 0.1;
-        const y = h / 2 + Math.sin(x * freq + t * speed) * amp
-                      + Math.sin(x * freq * 2.3 + t * speed * 1.5) * (amp * 0.3);
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+    const [ar, ag, ab] = state.accent.rgb;
+    const bars = 80;
+    const bw = w / bars;
+    for (let i = 0; i < bars; i++) {
+      let v = 0;
+      if (state.analyser && state.freqData && state.isPlaying) {
+        v = state.freqData[Math.floor((i / bars) * state.freqData.length * 0.75)] / 255;
       }
-      ctx.strokeStyle = `rgba(${color},${0.04 - line * 0.006})`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      const bh = 2 + v * h * 0.85;
+      ctx.fillStyle = `rgba(${ar},${ag},${ab},${0.10 + v * 0.5})`;
+      ctx.fillRect(i * bw, h - bh, bw * 0.55, bh);
     }
-
-    requestAnimationFrame(draw);
   }
-  draw();
+
+  requestAnimationFrame(loop);
 }
 
 /* ============================================================
-   THEME
+   杂项：时钟 / 滚动进度 / 预载
    ============================================================ */
-function setupTheme() {
-  const saved = localStorage.getItem('sj-theme');
-  const initial = saved || 'dark';
-  document.documentElement.dataset.theme = initial;
+function initChrome() {
+  const timeEl = $('#nav-time');
+  const tick = () => {
+    const d = new Date();
+    timeEl.textContent = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+  tick();
+  setInterval(tick, 10000);
 
-  $('#theme-toggle').addEventListener('click', () => {
-    const cur = document.documentElement.dataset.theme;
-    const next = cur === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = next;
-    localStorage.setItem('sj-theme', next);
-  });
-}
-
-/* ============================================================
-   NAV SCROLL + SCROLL INDICATOR
-   ============================================================ */
-function setupNavScroll() {
-  const nav = $('nav.nav');
-  const scrollProgress = $('.scroll-indicator-progress');
-  let ticking = false;
+  const bar = $('#scroll-progress-bar');
   window.addEventListener('scroll', () => {
-    if (!ticking) {
-      requestAnimationFrame(() => {
-        nav.classList.toggle('scrolled', window.scrollY > 40);
-        if (scrollProgress) {
-          const h = document.documentElement.scrollHeight - window.innerHeight;
-          const pct = h > 0 ? (window.scrollY / h) * 100 : 0;
-          scrollProgress.style.height = pct + '%';
-        }
-        ticking = false;
-      });
-      ticking = true;
-    }
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`;
   }, { passive: true });
-}
 
-/* ============================================================
-   CLOCK
-   ============================================================ */
-function updateNavTime() {
-  const now = new Date();
-  const h = String(now.getHours()).padStart(2, '0');
-  const m = String(now.getMinutes()).padStart(2, '0');
-  $('#nav-time').textContent = `SHENZHEN · ${h}:${m}`;
-}
-
-/* ============================================================
-   KEYBOARD
-   ============================================================ */
-function setupKeyboard() {
-  document.addEventListener('keydown', (e) => {
-    if (e.target.matches('input, textarea, [contenteditable]')) return;
-    if (e.code === 'Space' && state.currentIdx >= 0) {
-      e.preventDefault();
-      togglePlay(state.currentIdx);
-    }
+  window.addEventListener('resize', () => {
+    if (sphere) sphere.resize();
+    trackRefs.forEach(r => r.viz.resize());
+    sizePbViz();
   });
 }
 
-/* ============================================================
-   CURSOR GLOW
-   ============================================================ */
-function setupCursorGlow() {
-  const glow = $('#cursor-glow');
-  if (!glow) return;
-  let gx = 50, gy = 50;
-  let targetGx = 50, targetGy = 50;
-  let raf = null;
+function sizePbViz() {
+  const c = $('#pb-viz');
+  const rect = c.getBoundingClientRect();
+  if (!rect.width) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  c.width = rect.width * dpr;
+  c.height = rect.height * dpr;
+  pbVizCtx = { ctx: c.getContext('2d'), w: rect.width, h: rect.height, dpr };
+}
 
-  document.addEventListener('mousemove', (e) => {
-    targetGx = (e.clientX / window.innerWidth) * 100;
-    targetGy = (e.clientY / window.innerHeight) * 100;
-    if (!raf) {
-      raf = requestAnimationFrame(() => {
-        gx += (targetGx - gx) * 0.12;
-        gy += (targetGy - gy) * 0.12;
-        glow.style.setProperty('--gx', gx + '%');
-        glow.style.setProperty('--gy', gy + '%');
-        raf = null;
-      });
-    }
-  }, { passive: true });
+function hidePreloader() {
+  $('#preloader').classList.add('done');
+  document.body.classList.add('loaded');
 }
 
 /* ============================================================
-   INIT
+   启动
    ============================================================ */
-document.addEventListener('DOMContentLoaded', () => {
-  setupTheme();
-  updateNavTime();
-  setInterval(updateNavTime, 30000);
-  setupNavScroll();
-  setupKeyboard();
-  setupCursorGlow();
-  loadSongs();
+async function init() {
+  initCursor();
+  initChrome();
+  initAudioEvents();
 
-  // ambient particles
-  new AmbientCanvas($('#ambient-canvas'));
+  aurora = new Aurora($('#aurora'));
+  sphere = new Sphere($('#hero-sphere'));
 
-  // hero viz
-  initHeroViz();
+  $('#hero-play').addEventListener('click', () => toggleTrack(state.currentIdx < 0 ? 0 : state.currentIdx));
+  initMagnetic();
 
-  // register track viz canvases after render
-  const checkCanvases = setInterval(() => {
-    $$('.track-viz').forEach((canvas, i) => {
-      if (!vizCanvases.has(canvas)) {
-        registerViz(canvas, 'spectrum', 0.7);
-      }
-    });
-    const miniViz = $('#mini-viz');
-    if (miniViz && !vizCanvases.has(miniViz)) {
-      registerViz(miniViz, 'mini', 0.5);
-    }
-    if ($$('.track-viz').length > 0) {
-      clearInterval(checkCanvases);
-    }
-  }, 200);
-});
+  try {
+    const res = await fetch('songs.json');
+    state.songs = await res.json();
+  } catch (_) {
+    $('#song-list').innerHTML = '<div class="loading"><span class="loading-text">暫時無法載入</span></div>';
+  }
+
+  if (state.songs.length) {
+    renderTracks(state.songs);
+    $('#track-count').textContent = String(state.songs.length).padStart(2, '0');
+    updateAccent(state.songs[0]);
+  }
+
+  sizePbViz();
+
+  // 首帧就绪标记（测试锚点）
+  sphere.draw(16);
+  $('#hero-sphere').dataset.ready = 'true';
+
+  if (!REDUCED) {
+    requestAnimationFrame(loop);
+  } else {
+    aurora.draw(16);
+    sphere.draw(16);
+  }
+
+  // 预载退场
+  if (document.readyState === 'complete') setTimeout(hidePreloader, 600);
+  else window.addEventListener('load', () => setTimeout(hidePreloader, 600));
+  setTimeout(hidePreloader, 2600); // 兜底
+}
+
+init();
