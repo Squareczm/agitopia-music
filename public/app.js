@@ -338,12 +338,14 @@ function updateAccent(song) {
   root.setProperty('--accent-soft', `rgba(${r},${g},${b},0.16)`);
 }
 
-const trackRefs = []; // { el, viz, progressFg, song }
+const trackRefs = []; // 每首歌: { els: [多个 DOM 呈现], viz, progressFg, song }
 
 function setTrackUI(idx, playing) {
   trackRefs.forEach((ref, i) => {
-    ref.el.classList.toggle('is-active', i === idx);
-    ref.el.classList.toggle('is-playing', i === idx && playing);
+    ref.els.forEach(el => {
+      el.classList.toggle('is-active', i === idx);
+      el.classList.toggle('is-playing', i === idx && playing);
+    });
   });
   const bar = $('#player-bar');
   bar.classList.toggle('is-playing', playing);
@@ -412,7 +414,7 @@ function initAudioEvents() {
     $('#pb-seek-pos').style.width = `${pct * 100}%`;
     $('#pb-time').textContent = `${fmtTime(a.currentTime)} / ${fmtTime(a.duration)}`;
     const ref = trackRefs[state.currentIdx];
-    if (ref) ref.progressFg.style.strokeDashoffset = String(RING_LEN * (1 - pct));
+    if (ref && ref.progressFg) ref.progressFg.style.strokeDashoffset = String(RING_LEN * (1 - pct));
   });
 
   $('#pb-toggle').addEventListener('click', () => {
@@ -442,56 +444,133 @@ function initAudioEvents() {
 }
 
 /* ============================================================
-   渲染曲目
+   渲染：最新收录 + 分卷目录
    ============================================================ */
-function renderTracks(songs) {
+const SERIES_META = {
+  '宋词辑':   { en: 'Song Ci Anthology', desc: '把千年前的词牌，唱回声音里。' },
+  'AI 时代辑': { en: 'Age of AI',         desc: '在算法的噪音里，找回碳基生命的声音。' },
+  '单曲':     { en: 'Singles',            desc: '未归卷的零散心情。' },
+};
+const CN_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+
+function renderFeatured(song, idx) {
+  const wrap = $('#featured');
+  const node = $('#song-template').content.cloneNode(true);
+  const el = $('.track', node);
+  el.dataset.id = song.id;
+
+  $('.track-no', node).textContent = '最新收录';
+  $('.track-style', node).textContent = song.style || '';
+  $('.track-date', node).textContent = fmtDate(song.date);
+  $('.track-len', node).textContent = song.duration || '';
+  $('.track-title', node).textContent = song.title;
+  $('.track-subtitle', node).textContent = song.subtitle || '';
+  $('.track-desc', node).textContent = song.description || '';
+
+  const cover = $('.track-cover', node);
+  cover.src = coverOf(song);
+  cover.alt = song.title;
+
+  $('.track-play', node).addEventListener('click', () => toggleTrack(idx));
+
+  const lyricBtn = $('.lyric-toggle', node);
+  const lyricBox = $('.lyric', node);
+  if (song.lyrics) {
+    $('.lyric-inner', node).textContent = song.lyrics;
+    lyricBtn.addEventListener('click', () => {
+      const open = lyricBox.hidden;
+      lyricBox.hidden = !open;
+      lyricBtn.setAttribute('aria-expanded', String(open));
+      $('.lyric-toggle-text', el).textContent = open ? '收起歌詞' : '展開歌詞';
+    });
+  } else {
+    lyricBtn.style.display = 'none';
+  }
+
+  wrap.appendChild(node);
+  trackRefs[idx].els.push(el);
+  trackRefs[idx].viz = new DiscViz($('.track-viz', el));
+  trackRefs[idx].progressFg = $('.track-progress-fg', el);
+  return el;
+}
+
+function buildRow(song, idx, displayNo) {
+  const node = $('#row-template').content.cloneNode(true);
+  const el = $('.row', node);
+  el.dataset.id = song.id;
+
+  $('.row-no', node).textContent = String(displayNo).padStart(2, '0');
+  $('.row-title', node).textContent = song.title;
+  $('.row-subtitle', node).textContent = song.subtitle || '';
+  $('.row-style', node).textContent = song.style || '';
+  $('.row-date', node).textContent = fmtDate(song.date);
+  $('.row-len', node).textContent = song.duration || '';
+
+  $('.row-play', node).addEventListener('click', e => {
+    e.stopPropagation();
+    toggleTrack(idx);
+  });
+
+  const line = $('.row-line', node);
+  const detail = $('.row-detail', node);
+  const fill = () => {
+    const img = $('.row-cover', detail);
+    if (!img.src) { img.src = coverOf(song); img.alt = song.title; }
+    if (!$('.row-desc', detail).textContent) {
+      $('.row-desc', detail).textContent = song.description || '';
+      $('.row-lyric', detail).textContent = song.lyrics || '';
+    }
+  };
+  const toggleDetail = () => {
+    const open = detail.hidden;
+    if (open) fill();
+    detail.hidden = !open;
+    el.classList.toggle('is-open', open);
+    line.setAttribute('aria-expanded', String(open));
+  };
+  line.addEventListener('click', toggleDetail);
+  line.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDetail(); }
+  });
+
+  trackRefs[idx].els.push(el);
+  return node;
+}
+
+function renderAll(songs) {
+  songs.forEach(song => trackRefs.push({ els: [], viz: null, progressFg: null, song }));
+
+  renderFeatured(songs[0], 0);
+
+  // 分卷：按 series 分组。卷号按各卷最早日期排（编年），展示按最新日期倒序（新卷在上）
+  const groups = new Map();
+  songs.forEach((song, idx) => {
+    const key = song.series || '单曲';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(idx);
+  });
+  const groupList = [...groups.entries()].map(([name, idxs]) => ({
+    name, idxs,
+    earliest: Math.min(...idxs.map(i => +new Date(songs[i].date) || 0)),
+    latest: Math.max(...idxs.map(i => +new Date(songs[i].date) || 0)),
+  }));
+  const volOrder = [...groupList].sort((a, b) => a.earliest - b.earliest);
+  volOrder.forEach((g, i) => { g.vol = CN_NUM[i] || String(i + 1); });
+  groupList.sort((a, b) => b.latest - a.latest);
+
   const list = $('#song-list');
   list.innerHTML = '';
-  const tpl = $('#song-template');
-
-  songs.forEach((song, i) => {
-    const node = tpl.content.cloneNode(true);
-    const el = $('.track', node);
-    el.dataset.id = song.id;
-
-    $('.track-ghost', node).textContent = song.title.charAt(0);
-    $('.track-no', node).textContent = String(i + 1).padStart(2, '0');
-    $('.track-style', node).textContent = song.style || '';
-    $('.track-date', node).textContent = fmtDate(song.date);
-    $('.track-len', node).textContent = song.duration || '';
-    $('.track-title', node).textContent = song.title;
-    $('.track-subtitle', node).textContent = song.subtitle || '';
-    $('.track-desc', node).textContent = song.description || '';
-
-    const cover = $('.track-cover', node);
-    cover.src = coverOf(song);
-    cover.alt = song.title;
-    cover.loading = 'lazy';
-
-    $('.track-play', node).addEventListener('click', () => toggleTrack(i));
-
-    const lyricBtn = $('.lyric-toggle', node);
-    const lyricBox = $('.lyric', node);
-    if (song.lyrics) {
-      $('.lyric-inner', node).textContent = song.lyrics;
-      lyricBtn.addEventListener('click', () => {
-        const open = lyricBox.hidden;
-        lyricBox.hidden = !open;
-        lyricBtn.setAttribute('aria-expanded', String(open));
-        $('.lyric-toggle-text', node).textContent = open ? '收起歌詞' : '展開歌詞';
-      });
-    } else {
-      lyricBtn.style.display = 'none';
-    }
-
+  groupList.forEach(g => {
+    const node = $('#chapter-template').content.cloneNode(true);
+    const meta = SERIES_META[g.name] || { en: '', desc: '' };
+    $('.chapter-vol', node).textContent = `卷${g.vol}`;
+    $('.chapter-title', node).textContent = g.name;
+    $('.chapter-en', node).textContent = meta.en;
+    $('.chapter-desc', node).textContent = meta.desc;
+    $('.chapter-count', node).textContent = `${String(g.idxs.length).padStart(2, '0')} 首`;
+    const rowsBox = $('.chapter-rows', node);
+    g.idxs.forEach((idx, j) => rowsBox.appendChild(buildRow(songs[idx], idx, j + 1)));
     list.appendChild(node);
-
-    trackRefs.push({
-      el,
-      song,
-      viz: new DiscViz($('.track-viz', el)),
-      progressFg: $('.track-progress-fg', el),
-    });
   });
 
   // 入场 reveal
@@ -502,8 +581,8 @@ function renderTracks(songs) {
         io.unobserve(en.target);
       }
     });
-  }, { threshold: 0.12 });
-  trackRefs.forEach(ref => io.observe(ref.el));
+  }, { threshold: 0.08 });
+  $$('.track, .chapter').forEach(el => io.observe(el));
 }
 
 /* ============================================================
@@ -533,7 +612,7 @@ function loop(ts) {
   if (sphere) sphere.draw(dt);
 
   const ref = trackRefs[state.currentIdx];
-  if (ref) ref.viz.draw(true);
+  if (ref && ref.viz) ref.viz.draw(true);
 
   // 播放条底部频谱
   if (pbVizCtx && !$('#player-bar').hidden) {
