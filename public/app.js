@@ -698,7 +698,7 @@ async function init() {
   }
 
   if (state.songs.length) {
-    renderTracks(state.songs);
+    renderAll(state.songs);
     $('#track-count').textContent = String(state.songs.length).padStart(2, '0');
     updateAccent(state.songs[0]);
   }
