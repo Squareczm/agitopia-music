@@ -114,12 +114,20 @@
   <!-- 最新收录 -->
   <section class="featured-wrap" id="featured" aria-label="最新收录"></section>
 
-  <!-- 目录（按辑分卷） -->
-  <section class="anthology" id="song-list" aria-label="目录">
-    <div class="loading">
-      <span class="loading-ring"></span>
-      <span class="loading-text">載入中</span>
+  <!-- 目录（筛选 + 分页） -->
+  <section class="anthology" id="anthology" aria-label="目录">
+    <header class="library-head">
+      <span class="library-label">目 錄</span>
+      <div class="filter-bar" id="filter-bar" role="tablist" aria-label="按辑筛选"></div>
+      <p class="library-desc" id="library-desc"></p>
+    </header>
+    <div id="song-list">
+      <div class="loading">
+        <span class="loading-ring"></span>
+        <span class="loading-text">載入中</span>
+      </div>
     </div>
+    <nav class="pagination" id="pagination" aria-label="分页"></nav>
   </section>
 
 </main>
@@ -220,22 +228,6 @@
       </div>
     </div>
   </article>
-</template>
-
-<!-- ═══════ 模板：辑（卷） ═══════ -->
-<template id="chapter-template">
-  <section class="chapter">
-    <header class="chapter-head">
-      <span class="chapter-vol"></span>
-      <div class="chapter-title-wrap">
-        <h2 class="chapter-title"></h2>
-        <span class="chapter-en"></span>
-      </div>
-      <p class="chapter-desc"></p>
-      <span class="chapter-count"></span>
-    </header>
-    <div class="chapter-rows"></div>
-  </section>
 </template>
 
 <!-- ═══════ 模板：目录行 ═══════ -->

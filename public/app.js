@@ -502,7 +502,9 @@ function buildRow(song, idx, displayNo) {
   $('.row-no', node).textContent = String(displayNo).padStart(2, '0');
   $('.row-title', node).textContent = song.title;
   $('.row-subtitle', node).textContent = song.subtitle || '';
-  $('.row-style', node).textContent = song.style || '';
+  // 全部视图下徽章显示所属辑，筛选后显示曲风
+  $('.row-style', node).textContent =
+    library.filter === ALL ? (song.series || song.style || '') : (song.style || '');
   $('.row-date', node).textContent = fmtDate(song.date);
   $('.row-len', node).textContent = song.duration || '';
 
@@ -537,40 +539,140 @@ function buildRow(song, idx, displayNo) {
   return node;
 }
 
-function renderAll(songs) {
-  songs.forEach(song => trackRefs.push({ els: [], viz: null, progressFg: null, song }));
+/* ── 筛选 + 分页 ── */
+const PER_PAGE = 7;
+const ALL = '全部';
+const library = { filter: ALL, page: 1, groups: [], featuredEl: null };
 
-  renderFeatured(songs[0], 0);
-
-  // 分卷：按 series 分组。卷号按各卷最早日期排（编年），展示按最新日期倒序（新卷在上）
+function seriesGroups(songs) {
   const groups = new Map();
   songs.forEach((song, idx) => {
     const key = song.series || '单曲';
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(idx);
   });
-  const groupList = [...groups.entries()].map(([name, idxs]) => ({
+  const list = [...groups.entries()].map(([name, idxs]) => ({
     name, idxs,
     earliest: Math.min(...idxs.map(i => +new Date(songs[i].date) || 0)),
     latest: Math.max(...idxs.map(i => +new Date(songs[i].date) || 0)),
   }));
-  const volOrder = [...groupList].sort((a, b) => a.earliest - b.earliest);
-  volOrder.forEach((g, i) => { g.vol = CN_NUM[i] || String(i + 1); });
-  groupList.sort((a, b) => b.latest - a.latest);
+  [...list].sort((a, b) => a.earliest - b.earliest)
+    .forEach((g, i) => { g.vol = CN_NUM[i] || String(i + 1); });
+  list.sort((a, b) => b.latest - a.latest);
+  return list;
+}
+
+function filteredIdxs() {
+  if (library.filter === ALL) return state.songs.map((_, i) => i);
+  const g = library.groups.find(g => g.name === library.filter);
+  return g ? g.idxs : [];
+}
+
+function syncHash() {
+  const h = `#/${encodeURIComponent(library.filter)}/${library.page}`;
+  if (location.hash !== h) history.replaceState(null, '', h);
+}
+
+function readHash() {
+  const m = location.hash.match(/^#\/([^/]+)\/(\d+)$/);
+  if (!m) return;
+  const f = decodeURIComponent(m[1]);
+  if (f === ALL || library.groups.some(g => g.name === f)) library.filter = f;
+  library.page = Math.max(1, parseInt(m[2], 10) || 1);
+}
+
+function renderFilterBar() {
+  const bar = $('#filter-bar');
+  bar.innerHTML = '';
+  const names = [ALL, ...library.groups.map(g => g.name)];
+  names.forEach(name => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'filter-tab' + (library.filter === name ? ' is-on' : '');
+    btn.dataset.cursor = '';
+    const count = name === ALL ? state.songs.length
+      : library.groups.find(g => g.name === name).idxs.length;
+    btn.innerHTML = `<span>${name}</span><em>${String(count).padStart(2, '0')}</em>`;
+    btn.addEventListener('click', () => {
+      library.filter = name;
+      library.page = 1;
+      renderLibrary();
+    });
+    bar.appendChild(btn);
+  });
+
+  const desc = $('#library-desc');
+  if (library.filter === ALL) {
+    desc.innerHTML = '';
+  } else {
+    const g = library.groups.find(g => g.name === library.filter);
+    const meta = SERIES_META[g.name] || { en: '', desc: '' };
+    desc.innerHTML =
+      `<span class="library-vol">卷${g.vol}</span>` +
+      (meta.en ? `<span class="library-en">${meta.en}</span>` : '') +
+      (meta.desc ? `<span class="library-note">${meta.desc}</span>` : '');
+  }
+}
+
+function renderPagination(total) {
+  const nav = $('#pagination');
+  nav.innerHTML = '';
+  const pages = Math.max(1, Math.ceil(total / PER_PAGE));
+  if (pages === 1) return;
+  const mk = (label, page, cls = '', disabled = false) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = `page-btn ${cls}`;
+    b.dataset.cursor = '';
+    b.innerHTML = label;
+    b.disabled = disabled;
+    b.addEventListener('click', () => {
+      library.page = page;
+      renderLibrary();
+      $('#anthology').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return b;
+  };
+  nav.appendChild(mk('‹', library.page - 1, 'page-prev', library.page <= 1));
+  for (let i = 1; i <= pages; i++) {
+    nav.appendChild(mk(String(i).padStart(2, '0'), i, library.page === i ? 'is-on' : ''));
+  }
+  nav.appendChild(mk('›', library.page + 1, 'page-next', library.page >= pages));
+}
+
+function renderLibrary() {
+  const idxs = filteredIdxs();
+  const pages = Math.max(1, Math.ceil(idxs.length / PER_PAGE));
+  library.page = Math.min(library.page, pages);
+  const start = (library.page - 1) * PER_PAGE;
+  const slice = idxs.slice(start, start + PER_PAGE);
+
+  // 重建行引用（精选卡引用保留）
+  trackRefs.forEach((ref, i) => {
+    ref.els = (i === 0 && library.featuredEl) ? [library.featuredEl] : [];
+  });
 
   const list = $('#song-list');
   list.innerHTML = '';
-  groupList.forEach(g => {
-    const node = $('#chapter-template').content.cloneNode(true);
-    const meta = SERIES_META[g.name] || { en: '', desc: '' };
-    $('.chapter-vol', node).textContent = `卷${g.vol}`;
-    $('.chapter-title', node).textContent = g.name;
-    $('.chapter-en', node).textContent = meta.en;
-    $('.chapter-desc', node).textContent = meta.desc;
-    $('.chapter-count', node).textContent = `${String(g.idxs.length).padStart(2, '0')} 首`;
-    const rowsBox = $('.chapter-rows', node);
-    g.idxs.forEach((idx, j) => rowsBox.appendChild(buildRow(songs[idx], idx, j + 1)));
-    list.appendChild(node);
+  slice.forEach((idx, j) => list.appendChild(buildRow(state.songs[idx], idx, start + j + 1)));
+
+  renderFilterBar();
+  renderPagination(idxs.length);
+  syncHash();
+  setTrackUI(state.currentIdx, state.isPlaying);
+}
+
+function renderAll(songs) {
+  songs.forEach(song => trackRefs.push({ els: [], viz: null, progressFg: null, song }));
+  library.featuredEl = renderFeatured(songs[0], 0);
+  library.groups = seriesGroups(songs);
+  readHash();
+  renderLibrary();
+
+  window.addEventListener('hashchange', () => {
+    const before = `${library.filter}/${library.page}`;
+    readHash();
+    if (`${library.filter}/${library.page}` !== before) renderLibrary();
   });
 
   // 入场 reveal
@@ -582,7 +684,7 @@ function renderAll(songs) {
       }
     });
   }, { threshold: 0.08 });
-  $$('.track, .chapter').forEach(el => io.observe(el));
+  $$('.track, .anthology').forEach(el => io.observe(el));
 }
 
 /* ============================================================

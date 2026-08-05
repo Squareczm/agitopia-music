@@ -375,46 +375,69 @@ body.loaded .hero .reveal { transition-delay: 1.5s; }
   scrollbar-width: thin; scrollbar-color: var(--ink-faint) transparent;
 }
 
-/* ═══════════ 分卷目录 ═══════════ */
+/* ═══════════ 目录：筛选 + 分页 ═══════════ */
 .anthology {
   margin-top: clamp(90px, 15vh, 160px);
-  display: flex; flex-direction: column;
-  gap: clamp(70px, 12vh, 130px);
-}
-
-.chapter {
+  scroll-margin-top: 70px;
   opacity: 0; transform: translateY(48px);
   transition: opacity 1s var(--ease-out), transform 1s var(--ease-out);
 }
-.chapter.in { opacity: 1; transform: none; }
+.anthology.in { opacity: 1; transform: none; }
 
-.chapter-head {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-areas: "vol title count" ". desc .";
-  align-items: baseline;
-  column-gap: 26px; row-gap: 10px;
-  padding-bottom: 24px;
+.library-head {
+  display: flex; align-items: baseline; flex-wrap: wrap;
+  gap: 16px 28px;
+  padding-bottom: 22px;
   border-bottom: 1px solid rgba(236, 231, 221, 0.16);
 }
-.chapter-vol {
-  grid-area: vol;
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em;
-  color: var(--accent); white-space: nowrap;
-}
-.chapter-title-wrap { grid-area: title; display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
-.chapter-title {
+.library-label {
   font-family: var(--serif); font-weight: 900;
-  font-size: clamp(28px, 3.6vw, 42px);
-  letter-spacing: 0.06em; line-height: 1.2;
+  font-size: clamp(24px, 3vw, 34px); letter-spacing: 0.14em;
+  line-height: 1.2;
 }
-.chapter-en { font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 15px; color: var(--ink-faint); letter-spacing: 0.04em; }
-.chapter-desc {
-  grid-area: desc;
-  font-family: var(--serif); font-size: 14px; color: var(--ink-dim);
-  letter-spacing: 0.1em;
+
+.filter-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-left: auto; }
+.filter-tab {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  padding: 7px 16px;
+  border: 1px solid var(--line); border-radius: 999px;
+  font-family: var(--serif); font-size: 13.5px; letter-spacing: 0.1em;
+  color: var(--ink-dim);
+  transition: color 0.35s, border-color 0.35s, background 0.35s;
 }
-.chapter-count { grid-area: count; font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-faint); }
+.filter-tab em { font-style: normal; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-faint); transition: color 0.35s; }
+.filter-tab:hover { color: var(--ink); border-color: rgba(236, 231, 221, 0.3); }
+.filter-tab.is-on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.filter-tab.is-on em { color: var(--accent); }
+
+.library-desc {
+  flex-basis: 100%;
+  display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+  min-height: 0;
+}
+.library-desc:empty { display: none; }
+.library-vol { font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em; color: var(--accent); }
+.library-en { font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 14px; color: var(--ink-faint); }
+.library-note { font-family: var(--serif); font-size: 13.5px; color: var(--ink-dim); letter-spacing: 0.1em; }
+
+/* ── 分页器 ── */
+.pagination {
+  display: flex; justify-content: center; align-items: center; gap: 8px;
+  padding-top: 40px;
+}
+.pagination:empty { display: none; }
+.page-btn {
+  min-width: 38px; height: 38px; padding: 0 8px;
+  display: inline-grid; place-items: center;
+  border: 1px solid transparent; border-radius: 999px;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.1em;
+  color: var(--ink-dim);
+  transition: color 0.3s, border-color 0.3s, background 0.3s;
+}
+.page-btn:hover:not(:disabled) { color: var(--ink); border-color: var(--line); }
+.page-btn.is-on { color: var(--accent); border-color: var(--accent); }
+.page-btn:disabled { opacity: 0.25; cursor: default; }
+.page-prev, .page-next { font-size: 15px; }
 
 /* ── 目录行 ── */
 .row { border-bottom: 1px solid var(--line); }
@@ -513,7 +536,8 @@ body.loaded .hero .reveal { transition-delay: 1.5s; }
   .row-no, .row-style, .row-date { display: none; }
   .row-main { flex-direction: column; gap: 2px; }
   .row-title { white-space: normal; }
-  .chapter-head { grid-template-columns: auto 1fr; grid-template-areas: "vol count" "title title" "desc desc"; }
+  .library-head { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .filter-bar { margin-left: 0; }
   .row-detail-inner { grid-template-columns: 1fr; padding-left: 2px; }
   .row-cover { width: 128px; }
 }
