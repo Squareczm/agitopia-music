@@ -1,5 +1,33 @@
 [
   {
+    "id": "pozhenzi",
+    "title": "破阵子",
+    "subtitle": "为陈同甫赋壮词以寄之 · 辛弃疾",
+    "artist": "James Cheng",
+    "style": "Ancient War Epic",
+    "duration": "2:42",
+    "date": "2026-08-05",
+    "theme": "fire",
+    "file": "pozhenzi.mp3",
+    "coverImage": "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=600&q=80",
+    "description": "辛弃疾壮词的男中音战歌演绎：战鼓号角起势，古琴琵琶收尾，从沙场秋点兵的豪烈到可怜白发生的苍凉。",
+    "lyrics": "醉里挑灯看剑\n梦回吹角连营\n八百里分麾下炙\n五十弦翻塞外声\n\n沙场秋点兵\n沙场秋点兵\n\n马作的卢飞快\n弓如霹雳弦惊\n了却君王天下事\n赢得生前身后名\n\n沙场秋点兵\n沙场秋点兵\n\n可怜白发生\n可怜白发生\n可怜白发生"
+  },
+  {
+    "id": "shengshengman",
+    "title": "声声慢",
+    "subtitle": "寻寻觅觅 · 李清照",
+    "artist": "James Cheng",
+    "style": "Chinese Gufeng",
+    "duration": "3:47",
+    "date": "2026-08-05",
+    "theme": "warm",
+    "file": "shengshengman.mp3",
+    "coverImage": "https://images.unsplash.com/photo-1428592953211-077101b2021b?w=600&q=80",
+    "description": "李清照的秋日愁绪：空灵女声与疏落的古琴琵琶，黄昏细雨点点滴滴，怎一个愁字了得。",
+    "lyrics": "寻寻觅觅 冷冷清清\n凄凄惨惨戚戚\n乍暖还寒时候\n最难将息\n\n三杯两盏淡酒\n怎敌他 晚来风急\n雁过也 正伤心\n却是旧时相识\n\n满地黄花堆积\n憔悴损 如今有谁堪摘\n守着窗儿 独自怎生得黑\n\n梧桐更兼细雨\n到黄昏 点点滴滴\n这次第\n怎一个愁字了得"
+  },
+  {
     "id": "goule",
     "title": "够了",
     "subtitle": "Enough",
