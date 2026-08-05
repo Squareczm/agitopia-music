@@ -1,5 +1,35 @@
 [
   {
+    "id": "daizheshangchang",
+    "title": "带着伤上场",
+    "subtitle": "一首关于卸下伪装的反叛之歌",
+    "artist": "James Cheng",
+    "style": "Post-Punk Rock",
+    "duration": "4:38",
+    "date": "2026-08-05",
+    "theme": "fire",
+    "file": "daizheshangchang.mp3",
+    "coverImage": "https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=600&q=80",
+    "description": "后朋克慢燃摇滚，万青式超现实日常意象——打卡机、西装、剧本——不完美的模样，碎过的也能发光。",
+    "lyrics": "[Intro]\n(single distorted guitar note ringing, distant city ambience at dusk, bass drum enters slow)\n\n[Verse 1]\n傍晚六点十分的打卡机\n吐出一张没有名字的纸\n我把西装叠好放进柜子\n电梯里终于不用再微笑\n\n[Pre-Chorus]\n他们说你要体面你要正确\n你要成为他们想要的模样\n\n[Chorus]\n我带着伤上场\n不完美的模样\n我带着伤上场\n这一次不用伪装\n\n[Verse 2]\n凌晨两点的城市还醒着\n便利店的灯光像旧朋友\n这些年我演过太多角色\n最难的剧本叫做做自己\n\n[Pre-Chorus]\n他们说你不够好不够努力\n我说够了 就这样 也挺好\n\n[Chorus]\n我带着伤上场\n不完美的模样\n我带着伤上场\n这一次不用伪装\n\n[Bridge]\n(everything drops out, solo trumpet over distant feedback hum)\n不完美的才是活的\n没答案的才值得问\n(explosion: full band enters, distortion wall)\n我受够了正确的错误\n我要我自己的对与错\n\n[Chorus]\n(key change, layered gang vocals)\n我带着伤上场\n碎过的也能发光\n我带着伤上场\n这一次我不用——\n\n(held breath, silence)\n藏\n\n[Outro]\n(dissonant guitar fading, single trumpet note distant)\n带着伤...\n(fade to silence)",
+    "series": "摇滚集"
+  },
+  {
+    "id": "meishuodenidong",
+    "title": "没说的你都懂",
+    "subtitle": "一首关于被看见的情歌",
+    "artist": "James Cheng",
+    "style": "Cantopop Ballad",
+    "duration": "4:14",
+    "date": "2026-08-05",
+    "theme": "warm",
+    "file": "meishuodenidong.mp3",
+    "coverImage": "https://images.unsplash.com/photo-1500964757637-c85e8a162699?w=600&q=80",
+    "description": "钢琴驱动的港式抒情，林夕式情理反差——世界追着你要答案，只有一个人等你说不知道。",
+    "lyrics": "[Intro]\n(solo piano, warm and intimate, like lamplight spreading across a quiet room)\n\n[Verse 1]\n窗外的灯一盏盏灭了\n咖啡凉在桌上第三杯\n我翻着那些写了又删的话\n你合上书 看向我的眼睛\n\n[Pre-Chorus]\n世界总追着我交出答案\n只有你等我说 不知道\n\n[Chorus]\n没说的你都懂\n沉默里也有回声\n没说的你都懂\n脱下所有沉重\n\n[Verse 2]\n凌晨三点的城市沉下去\n你把毯子披在我肩上\n这些年练就的一身解释\n在你面前突然都用不上\n\n[Pre-Chorus]\n他们要一个永远正确的人\n你只要一个真实的我\n\n[Chorus]\n没说的你都懂\n像夜懂得每颗星\n没说的你都懂\n我终于可以不懂\n\n[Bridge]\n(sparse: just voice and a single piano note repeating)\n如果能早一点遇见你\n我就不用学了那么多\n独自扛着的本领\n(everything swells back in, strings enter)\n\n[Chorus]\n(layered vocals, key lift)\n没说的你都懂\n沉默里也有回声\n没说的你都懂\n脱下所有沉重\n\n[Outro]\n(piano fading, single note distant)\n没说的你都懂...\n(fade to silence)",
+    "series": "情歌集"
+  },
+  {
     "id": "diyidaoguang",
     "title": "第一道光",
     "subtitle": "一个AI的清晨",
